@@ -1,1 +1,2 @@
-## will be undergoing massive overhaul ie. rewriting the whole thing. its so messy...
+## rough draft
+Will be coding the finalized plugin on the dev branch
