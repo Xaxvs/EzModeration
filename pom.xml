@@ -7,13 +7,19 @@
   <groupId>me.xaxis</groupId>
   <artifactId>ezmoderation</artifactId>
   <version>1.0</version>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>25</maven.compiler.release>
     <junit.version>5.13.4</junit.version>
+    <spigot.version>26.2-R0.1-SNAPSHOT</spigot.version>
   </properties>
+
+  <modules>
+    <module>backend</module>
+    <module>frontend</module>
+  </modules>
 
   <repositories>
     <repository>
@@ -22,24 +28,17 @@
     </repository>
   </repositories>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.spigotmc</groupId>
-      <artifactId>spigot-api</artifactId>
-      <version>26.2-R0.1-SNAPSHOT</version>
-      <scope>provided</scope>
-    </dependency>
-
+  <dependencyManagement>
+    <dependencies>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <version>${junit.version}</version>
-      <scope>test</scope>
     </dependency>
-  </dependencies>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
-    <finalName>ezmoderation-${project.version}</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

@@ -1,10 +1,10 @@
-package me.xaxis.ezmoderation.player;
+package me.xaxis.ezmoderation.backend.player;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import me.xaxis.ezmoderation.infraction.Infraction;
+import me.xaxis.ezmoderation.backend.infraction.Infraction;
 
 public record PlayerProfile(
     UUID profileId,
@@ -41,5 +41,4 @@ public record PlayerProfile(
         Instant.EPOCH,
         playerName);
   }
-
 }

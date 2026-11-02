@@ -1,0 +1,4 @@
+name: EzModeration
+main: me.xaxis.ezmoderation.frontend.EzModeration
+version: 1
+api-version: '26.2'

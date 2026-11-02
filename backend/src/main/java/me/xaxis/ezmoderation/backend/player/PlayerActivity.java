@@ -1,4 +1,4 @@
-package me.xaxis.ezmoderation.player;
+package me.xaxis.ezmoderation.backend.player;
 
 import java.time.Instant;
 

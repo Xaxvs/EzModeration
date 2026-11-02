@@ -1,4 +1,4 @@
-package me.xaxis.ezmoderation.infraction;
+package me.xaxis.ezmoderation.backend.infraction;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -69,7 +69,6 @@ public abstract class Infraction {
     BAN,
     MUTE,
     WARN,
-    KICK,
-    ;
+    KICK;
   }
 }

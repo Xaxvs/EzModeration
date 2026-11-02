@@ -1,9 +1,8 @@
-package me.xaxis.ezmoderation.player;
-
-import me.xaxis.ezmoderation.infraction.Infraction;
+package me.xaxis.ezmoderation.backend.player;
 
 import java.util.ArrayList;
 import java.util.List;
+import me.xaxis.ezmoderation.backend.infraction.Infraction;
 
 public class PlayerInfractionHistory {
 
@@ -22,11 +21,11 @@ public class PlayerInfractionHistory {
   }
 
   public void unban() {
-    this.isBanned = false;
+    isBanned = false;
   }
 
   public void ban() {
-    this.isBanned = true;
+    isBanned = true;
   }
 
   public boolean isMuted() {
@@ -34,11 +33,11 @@ public class PlayerInfractionHistory {
   }
 
   public void unmute() {
-    this.isMuted = false;
+    isMuted = false;
   }
 
   public void mute() {
-    this.isMuted = true;
+    isMuted = true;
   }
 
   public List<Infraction> getInfractions() {
@@ -52,5 +51,4 @@ public class PlayerInfractionHistory {
   public void deleteInfraction(Infraction infraction) {
     infractions.remove(infraction);
   }
-
 }
