@@ -1,14 +1,1 @@
-# NEVER edit config-version; it is used to verify the file schema.
 config-version: 1
-
-# How often player profiles are autosaved, in ticks.
-# 6000 ticks = 5 minutes.
-# is clamped to a minimum of 1200 ticks = 1 minute.
-# Ticks are 1/20th of a second, so 20 ticks = 1 second.
-profile-auto-save-interval: 6000
-
-# The maximum length of a note or warn that can be added to a player profile.
-max-content-length: 512
-
-# Whether players are allowed to chat while frozen.
-allow-chat-while-frozen: true
