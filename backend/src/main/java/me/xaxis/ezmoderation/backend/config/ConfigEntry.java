@@ -1,6 +1,6 @@
 package me.xaxis.ezmoderation.backend.config;
 
-public record ConfigEntry<T>(String path, Type type) {
+public record ConfigEntry(String path, Type type) {
 
   public ConfigEntry {
     if (path == null || path.isBlank()) {

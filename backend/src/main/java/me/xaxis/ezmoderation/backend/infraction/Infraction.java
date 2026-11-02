@@ -29,6 +29,7 @@ public abstract class Infraction {
   }
 
   public static Infraction temporary(UUID playerId, Type type, String reason, Instant expiresAt) {
+    Objects.requireNonNull(expiresAt, "expiresAt");
     return new Infraction(playerId, type, reason, expiresAt) {};
   }
 

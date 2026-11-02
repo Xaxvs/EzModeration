@@ -8,13 +8,11 @@ import me.xaxis.ezmoderation.backend.infraction.Infraction;
 
 public class PlayerProfile {
 
-  private final UUID profileId;
   private final UUID playerId;
   private final PlayerActivity activity;
   private final PlayerInfractionHistory infractionHistory;
 
   public PlayerProfile(
-      UUID profileId,
       UUID playerId,
       List<Infraction> infractions,
       boolean isBanned,
@@ -23,13 +21,9 @@ public class PlayerProfile {
       Instant lastLoginTime,
       Instant lastLogoutTime,
       String lastKnownName) {
-    if (profileId == null || playerId == null || lastLoginTime == null || lastLogoutTime == null) {
-      throw new IllegalArgumentException("Profile IDs and activity timestamps are required");
+    if (playerId == null) {
+      throw new IllegalArgumentException("Player ID is required");
     }
-    if (lastKnownName == null || lastKnownName.isBlank()) {
-      throw new IllegalArgumentException("Last known name is required");
-    }
-    this.profileId = profileId;
     this.playerId = playerId;
     this.activity = new PlayerActivity(isOnline, lastLoginTime, lastLogoutTime, lastKnownName);
     this.infractionHistory = new PlayerInfractionHistory(infractions, isBanned, isMuted);
@@ -37,19 +31,7 @@ public class PlayerProfile {
 
   public PlayerProfile(UUID playerId, String playerName) {
     this(
-        UUID.randomUUID(),
-        playerId,
-        new ArrayList<>(),
-        false,
-        false,
-        false,
-        Instant.EPOCH,
-        Instant.EPOCH,
-        playerName);
-  }
-
-  public UUID getProfileId() {
-    return profileId;
+        playerId, new ArrayList<>(), false, false, false, Instant.EPOCH, Instant.EPOCH, playerName);
   }
 
   public UUID getPlayerId() {

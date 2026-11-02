@@ -1,7 +1,8 @@
 package me.xaxis.ezmoderation.backend.config;
 
-public interface PathValidator {
+public interface ConfigSource {
 
   boolean isInstance(String path, ConfigEntry.Type expectedType);
 
+  boolean isValid(String path);
 }

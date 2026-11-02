@@ -14,14 +14,14 @@ Use this skill when working on Java plugins for Spigot, Paper, or Bukkit-based M
    - Check the server version, Bukkit API version, and any dependencies before editing code.
 
 2. Inspect the project layout before changing behavior.
-   - Standard plugin structure includes `src/main/java`, `src/main/resources`, `plugin.yml`, and optional config files.
+   - Standard plugin structure includes `src/main/java`, `src/main/resources`, `plugin.yml`, and optional schema files.
    - Identify the main command class, listener classes, and service/model classes before patching logic.
 
 3. Follow Spigot plugin conventions.
    - Register commands in the plugin bootstrap class or a dedicated command manager.
    - Use `JavaPlugin`, `Listener`, and event handlers for gameplay logic.
    - Keep plugin state thread-safe when interacting with asynchronous tasks or scheduler calls.
-   - Store user-facing defaults and tunables in `config.yml` or companion config files.
+   - Store user-facing defaults and tunables in `schema.yml` or companion schema files.
 
 4. Handle compatibility carefully.
    - Avoid using APIs that are unavailable in the target Minecraft version.
@@ -36,7 +36,7 @@ Use this skill when working on Java plugins for Spigot, Paper, or Bukkit-based M
 ## Common patterns
 
 - Plugin startup:
-  - Initialize config files, registries, and managers in `onEnable()`.
+  - Initialize schema files, registries, and managers in `onEnable()`.
   - Clean up resources in `onDisable()`.
 
 - Commands:
@@ -49,7 +49,7 @@ Use this skill when working on Java plugins for Spigot, Paper, or Bukkit-based M
   - Use Bukkit scheduler or async tasks for long-running work.
 
 - Persistence:
-  - Save config changes within the plugin lifecycle and on explicit user actions.
+  - Save schema changes within the plugin lifecycle and on explicit user actions.
   - Use YAML or other supported file formats consistently.
 
 ## Debugging checklist
@@ -60,7 +60,7 @@ When the plugin fails to load or behaves incorrectly:
 - Confirm the plugin jar is built for the correct Minecraft version.
 - Check `plugin.yml` for commands, permissions, and main class names.
 - Verify dependencies are present and not shadowed by incompatible versions.
-- Test with a clean server config before assuming the issue is in gameplay logic.
+- Test with a clean server schema before assuming the issue is in gameplay logic.
 - Reproduce the issue with logging around the suspected event or command path.
 
 ## Recommended project practices
@@ -68,7 +68,7 @@ When the plugin fails to load or behaves incorrectly:
 - Keep each system isolated: commands, listeners, services, persistence, and scheduling.
 - Prefer clearly named classes and packages over broad utility classes.
 - Document assumptions about the server version and supported features.
-- Add validation for config values that must be numeric, non-null, or within ranges.
+- Add validation for schema values that must be numeric, non-null, or within ranges.
 - Avoid heavy operations in the main thread; offload work to async tasks when appropriate.
 
 ## Output expectations
