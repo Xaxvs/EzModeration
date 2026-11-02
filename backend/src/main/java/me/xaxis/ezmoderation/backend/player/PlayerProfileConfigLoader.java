@@ -8,8 +8,8 @@ public class PlayerProfileConfigLoader {
 
   public static Optional<PlayerProfile> loadPlayerProfileFromConfig(Map<String, Object> keys) {
 
-    UUID playerId = UUID.fromString((String) keys.get("playerId"));
-    String playerName = (String) keys.get("playerName");
+    UUID playerId = UUID.fromString((String) keys.get("player-id"));
+    String playerName = (String) keys.get("player-name");
 
     // todo: add more validation for other fields
     return Optional.empty();
