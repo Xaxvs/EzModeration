@@ -1,6 +1,7 @@
 package me.xaxis.ezmoderation.backend.infraction;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,10 +18,13 @@ public abstract class Infraction {
   }
 
   Infraction(UUID playerId, Type type, String reason, Instant timestamp, Instant expiresAt) {
-    this.playerId = playerId;
-    this.type = type;
+    this.playerId = Objects.requireNonNull(playerId, "playerId");
+    this.type = Objects.requireNonNull(type, "type");
+    if (reason == null || reason.isBlank()) {
+      throw new IllegalArgumentException("reason cannot be blank");
+    }
     this.reason = reason;
-    this.timestamp = timestamp;
+    this.timestamp = Objects.requireNonNull(timestamp, "timestamp");
     this.expiresAt = expiresAt;
   }
 

@@ -32,12 +32,18 @@ public final class PlayerActivity {
   }
 
   public void login(String playerName, Instant now) {
+    if (playerName == null || playerName.isBlank() || now == null) {
+      throw new IllegalArgumentException("Player name and login time are required");
+    }
     online = true;
     lastLogin = now;
     lastKnownName = playerName;
   }
 
   public void logout(Instant now) {
+    if (now == null) {
+      throw new IllegalArgumentException("Logout time is required");
+    }
     online = false;
     lastLogout = now;
   }

@@ -13,8 +13,8 @@ public class PlayerProfileSchema extends Config {
         new ConfigEntry<>("activity.last-login-time", ConfigEntry.Type.LONG),
         new ConfigEntry<>("activity.last-logout-time", ConfigEntry.Type.LONG),
         new ConfigEntry<>("activity.last-known-name", ConfigEntry.Type.STRING),
-        new ConfigEntry<>("infractionHistory.infractions", ConfigEntry.Type.LIST),
-        new ConfigEntry<>("infractionHistory.is-banned", ConfigEntry.Type.BOOLEAN),
-        new ConfigEntry<>("infractionHistory.is-muted", ConfigEntry.Type.BOOLEAN));
+        new ConfigEntry<>("infraction-history.infractions", ConfigEntry.Type.LIST),
+        new ConfigEntry<>("infraction-history.is-banned", ConfigEntry.Type.BOOLEAN),
+        new ConfigEntry<>("infraction-history.is-muted", ConfigEntry.Type.BOOLEAN));
   }
 }

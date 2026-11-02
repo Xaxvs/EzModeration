@@ -11,6 +11,9 @@ public class PlayerInfractionHistory {
   private boolean isMuted;
 
   public PlayerInfractionHistory(List<Infraction> infractions, boolean isBanned, boolean isMuted) {
+    if (infractions == null || infractions.stream().anyMatch(java.util.Objects::isNull)) {
+      throw new IllegalArgumentException("Infractions cannot be null");
+    }
     this.infractions = new ArrayList<>(infractions);
     this.isBanned = isBanned;
     this.isMuted = isMuted;
@@ -45,6 +48,9 @@ public class PlayerInfractionHistory {
   }
 
   public void addInfraction(Infraction infraction) {
+    if (infraction == null) {
+      throw new IllegalArgumentException("Infraction cannot be null");
+    }
     infractions.add(infraction);
   }
 

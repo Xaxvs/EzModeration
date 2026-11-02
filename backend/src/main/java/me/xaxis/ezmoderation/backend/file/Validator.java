@@ -1,6 +1,7 @@
 package me.xaxis.ezmoderation.backend.file;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Logger;
 import me.xaxis.ezmoderation.backend.config.Config;
@@ -13,11 +14,14 @@ public class Validator {
   private final Logger logger;
 
   public Validator(PathValidator pathValidator, Logger logger) {
-    this.pathValidator = pathValidator;
-    this.logger = logger;
+    this.pathValidator = Objects.requireNonNull(pathValidator, "pathValidator");
+    this.logger = Objects.requireNonNull(logger, "logger");
   }
 
   public static UUID validateUUID(String uuidString) {
+    if (uuidString == null) {
+      return null;
+    }
     try {
       return UUID.fromString(uuidString);
     } catch (IllegalArgumentException e) {
@@ -26,20 +30,22 @@ public class Validator {
   }
 
   private boolean checkObjectType(ConfigEntry.Type expectedType, Object object, String path) {
-    if (!pathValidator.isInstance(path, expectedType)) {
+    if (object == null || !pathValidator.isInstance(path, expectedType)) {
       logger.warning(
           "Config entry type mismatch for path: "
               + path
               + ". Expected: "
               + expectedType
               + ", but got: "
-              + object.getClass().getName());
+              + (object == null ? "null" : object.getClass().getName()));
       return false;
     }
     return true;
   }
 
   public boolean validate(Map<String, Object> keys, Config config) {
+    Objects.requireNonNull(keys, "keys");
+    Objects.requireNonNull(config, "config");
     boolean isValid = true;
     for (int i = 0; i < config.getEntries().size(); i++) {
       ConfigEntry<?> entry = config.getEntries().get(i);
