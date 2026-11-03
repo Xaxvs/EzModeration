@@ -1,50 +1,35 @@
 package me.xaxis.ezmoderation.frontend.player;
 
-import java.util.Optional;
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 import me.xaxis.ezmoderation.backend.config.ConfigEntry;
-import me.xaxis.ezmoderation.backend.config.ConfigValidator;
+import me.xaxis.ezmoderation.backend.config.ConfigFile;
 import me.xaxis.ezmoderation.backend.config.ConfigSource;
+import me.xaxis.ezmoderation.backend.config.ConfigValidator;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
-import me.xaxis.ezmoderation.backend.player.PlayerProfileConfigLoader;
 import me.xaxis.ezmoderation.backend.player.PlayerProfileSchema;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
-public class PlayerProfileLoader implements ConfigSource {
+final class PlayerProfileLoader implements ConfigSource {
 
   private final FileConfiguration yaml;
   private final Logger logger;
+  private final UUID playerId;
+  private final boolean writeDefaults;
+  private final ConfigFile configFile;
 
-  public PlayerProfileLoader(FileConfiguration yaml, Logger logger) {
-    this.yaml = yaml;
+  PlayerProfileLoader(Path path, Logger logger, UUID playerId) {
+    this.configFile = new ConfigFile(path, playerId + ".yml");
+    this.yaml = YamlConfiguration.loadConfiguration(configFile.getPath().toFile());
     this.logger = logger;
+    this.playerId = playerId;
+    this.writeDefaults = configFile.initialize();
   }
 
-  public PlayerProfile loadPlayerProfile() {
-
-    ConfigValidator configValidator = new ConfigValidator(this, logger);
-    if (!configValidator.validate(yaml.getValues(true), new PlayerProfileSchema())) {
-      logger.severe("Failed to validate player profile.");
-      return null;
-    }
-
-    PlayerProfileConfigLoader playerProfileConfigLoader = new PlayerProfileConfigLoader();
-
-    Optional<PlayerProfile> optionalPlayerProfile =
-        playerProfileConfigLoader.loadFromConfig(yaml.getValues(true));
-
-    if (optionalPlayerProfile.isPresent()) {
-      return optionalPlayerProfile.get();
-    } else {
-      logger.severe("Failed to load player profile.");
-      // todo: handle the case where the player profile could not be loaded
-
-      return null;
-    }
-  }
-
-  private static boolean isUuid(String value) {
+  private boolean isUuid(String value) {
     if (value == null) {
       return false;
     }
@@ -54,6 +39,29 @@ public class PlayerProfileLoader implements ConfigSource {
     } catch (IllegalArgumentException exception) {
       return false;
     }
+  }
+
+  public boolean shouldSave() {
+    return writeDefaults;
+  }
+
+  public PlayerProfile load() {
+
+    if (writeDefaults) {
+      write(PlayerProfileSchema.defaults(playerId));
+    }
+
+    ConfigValidator configValidator = new ConfigValidator(this, logger);
+    if (!configValidator.validate(yaml.getValues(true), new PlayerProfileSchema())) {
+      logger.severe("Failed to validate player profile.");
+      return null;
+    }
+
+    return PlayerProfileSchema.load(yaml.getValues(true))
+        .orElseGet(() -> {
+          logger.severe("Failed to load player profile.");
+          return null;
+        });
   }
 
   @Override
@@ -72,5 +80,17 @@ public class PlayerProfileLoader implements ConfigSource {
   @Override
   public boolean isValid(String path) {
     return yaml.isSet(path);
+  }
+
+  public void write(Map<String, Object> values) {
+    values.forEach(yaml::set);
+  }
+
+  public void save() {
+    configFile.save(saveToString());
+  }
+
+  public String saveToString() {
+    return yaml.saveToString();
   }
 }

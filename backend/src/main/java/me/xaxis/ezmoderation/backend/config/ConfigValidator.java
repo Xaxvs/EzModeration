@@ -2,8 +2,18 @@ package me.xaxis.ezmoderation.backend.config;
 
 import java.util.Map;
 import java.util.logging.Logger;
+import me.xaxis.ezmoderation.backend.file.Schema;
 
 public record ConfigValidator(ConfigSource configSource, Logger logger) {
+
+  public ConfigValidator {
+    if (configSource == null) {
+      throw new NullPointerException("Config source cannot be null");
+    }
+    if (logger == null) {
+      throw new NullPointerException("Logger cannot be null");
+    }
+  }
 
   private boolean checkObjectType(ConfigEntry.Type expectedType, Object object, String path) {
     if (object == null || !configSource.isInstance(path, expectedType)) {

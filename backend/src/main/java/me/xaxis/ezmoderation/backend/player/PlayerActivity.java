@@ -9,6 +9,12 @@ public final class PlayerActivity {
   private String lastKnownName;
 
   public PlayerActivity(boolean online, Instant lastLogin, Instant lastLogout, String lastKnownName) {
+    if (lastLogin == null || lastLogout == null) {
+      throw new IllegalArgumentException("Activity timestamps are required");
+    }
+    if (lastKnownName == null || lastKnownName.isBlank()) {
+      throw new IllegalArgumentException("Last known name is required");
+    }
     this.online = online;
     this.lastLogin = lastLogin;
     this.lastLogout = lastLogout;

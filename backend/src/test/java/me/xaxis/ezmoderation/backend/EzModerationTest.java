@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
-import me.xaxis.ezmoderation.backend.config.ConfigEntry;
-import me.xaxis.ezmoderation.backend.config.ConfigSource;
-import me.xaxis.ezmoderation.backend.config.ConfigValidator;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import me.xaxis.ezmoderation.backend.config.*;
 import me.xaxis.ezmoderation.backend.player.PlayerActivity;
 import me.xaxis.ezmoderation.backend.player.PlayerInfractionHistory;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
-import me.xaxis.ezmoderation.backend.player.PlayerProfileConfigLoader;
 import me.xaxis.ezmoderation.backend.player.PlayerProfileSchema;
 import me.xaxis.ezmoderation.backend.infraction.Infraction;
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ class EzModerationTest {
   void profileLoaderBuildsProfileAndInfraction() {
     Map<String, Object> values = profileValues();
     PlayerProfile profile =
-        new PlayerProfileConfigLoader().loadFromConfig(values).orElseThrow();
+        PlayerProfileSchema.load(values).orElseThrow();
 
     assertEquals(PLAYER_ID, profile.getPlayerId());
     assertEquals("Alex", profile.getActivity().getLastKnownName());
@@ -69,26 +69,44 @@ class EzModerationTest {
   }
 
   @Test
+  void profileSchemaSerializesDomainObjectsToConfigValues() {
+    PlayerProfile profile =
+        PlayerProfileSchema.load(profileValues()).orElseThrow();
+
+    Map<String, Object> serialized = PlayerProfileSchema.serialize(profile);
+    Object rawInfractions = serialized.get("infraction-history.infractions");
+
+    assertInstanceOf(List.class, rawInfractions);
+    Object rawInfraction = ((List<?>) rawInfractions).getFirst();
+    assertInstanceOf(Map.class, rawInfraction);
+    assertEquals("WARN", ((Map<?, ?>) rawInfraction).get("type"));
+    assertEquals(1_700_000_000_000L, ((Map<?, ?>) rawInfraction).get("timestamp"));
+    assertFalse(((Map<?, ?>) rawInfraction).containsKey("expires-at"));
+  }
+
+  @Test
   void profileLoaderRejectsMalformedValues() {
     Map<String, Object> values = profileValues();
     values.put("player-id", "not-a-uuid");
-    assertTrue(new PlayerProfileConfigLoader().loadFromConfig(values).isEmpty());
+    assertTrue(PlayerProfileSchema.load(values).isEmpty());
 
     values = profileValues();
     values.put("infraction-history.infractions", List.of("not-a-map"));
-    assertTrue(new PlayerProfileConfigLoader().loadFromConfig(values).isEmpty());
+    assertTrue(PlayerProfileSchema.load(values).isEmpty());
 
-    assertTrue(new PlayerProfileConfigLoader().loadFromConfig(null).isEmpty());
+    values = profileValues();
+    values.put("activity.last-login-time", 1.5d);
+    assertTrue(PlayerProfileSchema.load(values).isEmpty());
+
+    assertTrue(PlayerProfileSchema.load(null).isEmpty());
   }
 
   @Test
   void profileLoaderHandlesRepeatedLoads() {
-    PlayerProfileConfigLoader loader = new PlayerProfileConfigLoader();
-
     for (int i = 0; i < 10_000; i++) {
       Map<String, Object> values = profileValues();
       values.put("activity.last-known-name", "Player" + i);
-      assertTrue(loader.loadFromConfig(values).isPresent());
+      assertTrue(PlayerProfileSchema.load(values).isPresent());
     }
   }
 
@@ -110,6 +128,12 @@ class EzModerationTest {
 
     assertThrows(IllegalArgumentException.class, () -> activity.login("", login));
     assertThrows(IllegalArgumentException.class, () -> activity.logout(null));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new PlayerActivity(false, null, initial, "Alex"));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new PlayerActivity(false, initial, initial, " "));
   }
 
   @Test
@@ -152,6 +176,15 @@ class EzModerationTest {
     assertThrows(
         NullPointerException.class,
         () -> Infraction.temporary(PLAYER_ID, Infraction.Type.MUTE, "reason", null));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            Infraction.load(
+                PLAYER_ID,
+                Infraction.Type.MUTE,
+                "reason",
+                now,
+                now.minusSeconds(1)));
   }
 
   @Test
@@ -159,6 +192,86 @@ class EzModerationTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> new PlayerProfile(null, "Alex"));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new PlayerProfile(
+                PLAYER_ID,
+                List.of(),
+                false,
+                false,
+                false,
+                null,
+                Instant.EPOCH,
+                "Alex"));
+  }
+
+  @Test
+  void validatorsAndFileWritesRejectNullInputs() throws Exception {
+    MapConfigSource source = new MapConfigSource(profileValues());
+    assertThrows(
+        NullPointerException.class,
+        () -> new ConfigValidator(null, Logger.getAnonymousLogger()));
+    assertThrows(
+        NullPointerException.class,
+        () -> new ConfigValidator(source, null));
+    assertThrows(
+        NullPointerException.class,
+        () -> me.xaxis.ezmoderation.backend.file.SafeFileWrite.save(null, "data"));
+    assertThrows(
+        NullPointerException.class,
+        () ->
+            me.xaxis.ezmoderation.backend.file.SafeFileWrite.save(
+                Files.createTempDirectory("ezmoderation-null-write"), null));
+  }
+
+  @Test
+  void configFileRequiresValidConstructionArgumentsAndInitializesOnce() throws Exception {
+    assertThrows(IllegalArgumentException.class, () -> new ConfigFile(null, "profile.yml"));
+    assertThrows(IllegalArgumentException.class, () -> new ConfigFile(Path.of("."), null));
+
+    Path folder = Files.createTempDirectory("ezmoderation-config-test");
+    ConfigFile file = new ConfigFile(folder, "profile.yml");
+    assertTrue(file.initialize());
+    assertFalse(file.initialize());
+    assertTrue(Files.exists(folder.resolve("profile.yml")));
+    file.delete();
+    assertFalse(Files.exists(folder.resolve("profile.yml")));
+  }
+
+  @Test
+  void profileManagerCanCreateAndCacheProfile() throws Exception {
+    Path folder = Files.createTempDirectory("ezmoderation-manager-test");
+    PlayerProfile expected = new PlayerProfile(PLAYER_ID, "Alex");
+    MemoryProfileStore store = new MemoryProfileStore(expected);
+    me.xaxis.ezmoderation.backend.player.PlayerProfileManager manager =
+        new me.xaxis.ezmoderation.backend.player.PlayerProfileManager(store);
+
+    assertSame(expected, manager.getPlayerProfile(PLAYER_ID.toString()));
+    assertSame(expected, manager.getPlayerProfile(PLAYER_ID.toString()));
+    assertEquals(1, manager.getPlayerProfiles().spliterator().getExactSizeIfKnown());
+  }
+
+  @Test
+  void profileManagerRejectsNullDependencies() throws Exception {
+    Path folder = Files.createTempDirectory("ezmoderation-manager-null-test");
+    MemoryProfileStore store = new MemoryProfileStore(null);
+
+    assertThrows(
+        NullPointerException.class,
+        () -> new me.xaxis.ezmoderation.backend.player.PlayerProfileManager(null));
+  }
+
+  @Test
+  void profileManagerRejectsStoreReturningWrongProfile() throws Exception {
+    UUID otherId = UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
+    MemoryProfileStore store = new MemoryProfileStore(new PlayerProfile(otherId, "Other"));
+    me.xaxis.ezmoderation.backend.player.PlayerProfileManager manager =
+        new me.xaxis.ezmoderation.backend.player.PlayerProfileManager(store);
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> manager.getPlayerProfile(PLAYER_ID));
   }
 
   private static Map<String, Object> profileValues() {
@@ -198,6 +311,28 @@ class EzModerationTest {
     @Override
     public boolean isValid(String path) {
       return values.containsKey(path);
+    }
+
+  }
+
+  private static final class MemoryProfileStore
+      implements ConfigStore<PlayerProfile> {
+    private PlayerProfile profile;
+    private int saves;
+
+    private MemoryProfileStore(PlayerProfile profile) {
+      this.profile = profile;
+    }
+
+    @Override
+    public ConfigStore.Result<PlayerProfile> load(UUID playerId) {
+      return new ConfigStore.Result<>(false, profile);
+    }
+
+    @Override
+    public void save(ConfigStore.Result<PlayerProfile> result) {
+      this.profile = result.profile();
+      saves++;
     }
   }
 }

@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-public abstract class Infraction {
+public class Infraction {
 
   private final UUID playerId;
   private final Type type;
@@ -25,6 +25,9 @@ public abstract class Infraction {
     }
     this.reason = reason;
     this.timestamp = Objects.requireNonNull(timestamp, "timestamp");
+    if (expiresAt != null && expiresAt.isBefore(timestamp)) {
+      throw new IllegalArgumentException("expiresAt cannot be before timestamp");
+    }
     this.expiresAt = expiresAt;
   }
 

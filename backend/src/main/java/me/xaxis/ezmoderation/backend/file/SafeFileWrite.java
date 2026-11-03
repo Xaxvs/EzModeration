@@ -5,6 +5,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 public final class SafeFileWrite {
@@ -16,6 +17,8 @@ public final class SafeFileWrite {
   }
 
   public static void save(Path path, String data) throws IOException {
+    Objects.requireNonNull(path, "path");
+    Objects.requireNonNull(data, "data");
 
     Path target = path.toAbsolutePath();
     Path parent = target.getParent();
