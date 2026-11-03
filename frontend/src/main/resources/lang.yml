@@ -1,4 +1,3 @@
-config-version: 1
 
 no-permission: '&cYou do not have permission to perform this command.'
 invalid-player: '&c{player} was not found or does not exist.'

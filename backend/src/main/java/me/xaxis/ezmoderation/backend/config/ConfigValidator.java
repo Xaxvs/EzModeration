@@ -2,7 +2,6 @@ package me.xaxis.ezmoderation.backend.config;
 
 import java.util.Map;
 import java.util.logging.Logger;
-import me.xaxis.ezmoderation.backend.file.Schema;
 
 public record ConfigValidator(ConfigSource configSource, Logger logger) {
 

@@ -26,7 +26,6 @@ class EzModerationTest {
   private static Map<String, Object> profileValues() {
     Map<String, Object> values = new HashMap<>();
     values.put("player-id", PLAYER_ID.toString());
-    values.put("activity.is-online", true);
     values.put("activity.last-login-time", 1_700_000_000_000L);
     values.put("activity.last-logout-time", 1_700_000_001_000L);
     values.put("activity.last-known-name", "Alex");
@@ -42,8 +41,6 @@ class EzModerationTest {
                 "testing",
                 "timestamp",
                 1_700_000_000_000L)));
-    values.put("infraction-history.is-banned", true);
-    values.put("infraction-history.is-muted", false);
     return values;
   }
 
@@ -60,7 +57,7 @@ class EzModerationTest {
   void validatorRejectsMissingNestedPathAndWrongType() {
     Map<String, Object> values = profileValues();
     values.remove("activity.last-login-time");
-    values.put("activity.is-online", "true");
+    values.put("activity.last-logout-time", "not-a-timestamp");
     ConfigValidator validator =
         new ConfigValidator(new MapConfigSource(values), Logger.getAnonymousLogger());
 
@@ -84,8 +81,8 @@ class EzModerationTest {
 
     assertEquals(PLAYER_ID, profile.getPlayerId());
     assertEquals("Alex", profile.getActivity().getLastKnownName());
-    assertTrue(profile.getActivity().isOnline());
-    assertTrue(profile.getInfractionHistory().isBanned());
+    assertFalse(profile.getActivity().isOnline());
+    assertFalse(profile.getInfractionHistory().isBanned());
     assertEquals(1, profile.getInfractionHistory().getInfractions().size());
     assertEquals(
         Infraction.Type.WARN, profile.getInfractionHistory().getInfractions().getFirst().getType());
@@ -96,6 +93,7 @@ class EzModerationTest {
     PlayerProfile profile = PlayerProfileSchema.load(profileValues()).orElseThrow();
 
     Map<String, Object> serialized = PlayerProfileSchema.serialize(profile);
+    assertFalse(serialized.containsKey("activity.is-online"));
     Object rawInfractions = serialized.get("infraction-history.infractions");
 
     assertInstanceOf(List.class, rawInfractions);
@@ -159,20 +157,13 @@ class EzModerationTest {
   @Test
   void historyProtectsItsCollectionAndRejectsNullInfractions() {
     Infraction infraction = Infraction.permanent(PLAYER_ID, Infraction.Type.BAN, "griefing");
-    PlayerInfractionHistory history =
-        new PlayerInfractionHistory(List.of(infraction), false, false);
+    PlayerInfractionHistory history = new PlayerInfractionHistory(List.of(infraction));
 
     List<Infraction> copy = history.getInfractions();
     assertThrows(UnsupportedOperationException.class, () -> copy.add(infraction));
     assertThrows(IllegalArgumentException.class, () -> history.addInfraction(null));
 
-    history.ban();
-    history.mute();
     assertTrue(history.isBanned());
-    assertTrue(history.isMuted());
-    history.unban();
-    history.unmute();
-    assertFalse(history.isBanned());
     assertFalse(history.isMuted());
   }
 
@@ -207,8 +198,7 @@ class EzModerationTest {
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            new PlayerProfile(
-                PLAYER_ID, List.of(), false, false, false, null, Instant.EPOCH, "Alex"));
+        new PlayerProfile(PLAYER_ID, List.of(), false, null, Instant.EPOCH, "Alex"));
   }
 
   @Test
@@ -248,8 +238,8 @@ class EzModerationTest {
     MemoryProfileStore store = new MemoryProfileStore(expected);
     PlayerProfileManager manager = new PlayerProfileManager(store);
 
-    assertSame(expected, manager.getPlayerProfile(PLAYER_ID, "Alex"));
-    assertSame(expected, manager.getPlayerProfile(PLAYER_ID, "Alex"));
+    assertEquals("Alex", manager.loadOrCreateProfile(PLAYER_ID, "Alex").name());
+    assertEquals("Alex", manager.getProfile(PLAYER_ID).orElseThrow().name());
     assertEquals(1, manager.getPlayerProfiles().spliterator().getExactSizeIfKnown());
   }
 
@@ -258,8 +248,7 @@ class EzModerationTest {
     MemoryProfileStore store = new MemoryProfileStore(null);
     PlayerProfileManager manager = new PlayerProfileManager(store);
 
-    assertThrows(IllegalArgumentException.class, () -> manager.getPlayerProfile(null, "Alex"));
-    assertThrows(IllegalArgumentException.class, () -> manager.getPlayerProfile(PLAYER_ID, null));
+    assertThrows(IllegalArgumentException.class, () -> manager.getProfile(null));
   }
 
   @Test
@@ -276,7 +265,9 @@ class EzModerationTest {
     MemoryProfileStore store = new MemoryProfileStore(new PlayerProfile(otherId, "Other"));
     PlayerProfileManager manager = new PlayerProfileManager(store);
 
-    assertThrows(IllegalStateException.class, () -> manager.getPlayerProfile(PLAYER_ID, "Alex"));
+    assertThrows(
+        IllegalStateException.class,
+        () -> manager.loadOrCreateProfile(PLAYER_ID, "Alex"));
   }
 
   private record MapConfigSource(Map<String, Object> values) implements ConfigSource {

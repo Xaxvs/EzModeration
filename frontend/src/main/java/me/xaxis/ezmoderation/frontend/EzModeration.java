@@ -1,5 +1,6 @@
 package me.xaxis.ezmoderation.frontend;
 
+import java.util.UUID;
 import me.xaxis.ezmoderation.backend.player.data.PlayerProfileManager;
 import me.xaxis.ezmoderation.frontend.player.BukkitPlayerProfileStore;
 import org.bukkit.entity.Player;
@@ -24,10 +25,12 @@ public class EzModeration extends JavaPlugin {
     playerProfileManager = new PlayerProfileManager(playerProfileStore);
 
     for (Player player : getServer().getOnlinePlayers()) {
-      getLogger().info("Loading player profile for: " + player.getName());
-      playerProfileManager.getPlayerProfile(player.getUniqueId(), player.getName());
+      UUID playerId = player.getUniqueId();
+      String playerName = player.getName();
+      getLogger().info("Loading player profile for: " + playerName);
+
+      playerProfileManager.loadOrCreateProfile(playerId, playerName);
     }
-    playerProfileManager.saveAllDirtyProfiles();
   }
 
   @Override

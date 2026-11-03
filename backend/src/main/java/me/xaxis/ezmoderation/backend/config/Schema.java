@@ -1,9 +1,8 @@
-package me.xaxis.ezmoderation.backend.file;
+package me.xaxis.ezmoderation.backend.config;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import me.xaxis.ezmoderation.backend.config.ConfigEntry;
 
 public interface Schema {
   static String requireString(Object value) {

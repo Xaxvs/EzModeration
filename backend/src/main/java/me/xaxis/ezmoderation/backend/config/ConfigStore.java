@@ -21,12 +21,16 @@ public interface ConfigStore<T> {
       return isDirty;
     }
 
-    public void setDirty(boolean dirty) {
-      isDirty = dirty;
-    }
-
     public T profile() {
       return value;
+    }
+
+    public void setClean() {
+      isDirty = false;
+    }
+
+    public void setDirty() {
+      isDirty = true;
     }
   }
 }

@@ -15,8 +15,6 @@ public class PlayerProfile {
   public PlayerProfile(
       UUID playerId,
       List<Infraction> infractions,
-      boolean isBanned,
-      boolean isMuted,
       boolean isOnline,
       Instant lastLoginTime,
       Instant lastLogoutTime,
@@ -26,12 +24,11 @@ public class PlayerProfile {
     }
     this.playerId = playerId;
     this.activity = new PlayerActivity(isOnline, lastLoginTime, lastLogoutTime, lastKnownName);
-    this.infractionHistory = new PlayerInfractionHistory(infractions, isBanned, isMuted);
+    this.infractionHistory = new PlayerInfractionHistory(infractions);
   }
 
   public PlayerProfile(UUID playerId, String playerName) {
-    this(
-        playerId, new ArrayList<>(), false, false, false, Instant.EPOCH, Instant.EPOCH, playerName);
+    this(playerId, new ArrayList<>(), false, Instant.EPOCH, Instant.EPOCH, playerName);
   }
 
   public UUID getPlayerId() {
