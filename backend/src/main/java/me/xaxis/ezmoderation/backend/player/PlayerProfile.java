@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import me.xaxis.ezmoderation.backend.infraction.Infraction;
+import me.xaxis.ezmoderation.backend.player.infraction.Infraction;
 
 public class PlayerProfile {
 

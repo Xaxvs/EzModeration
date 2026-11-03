@@ -1,9 +1,10 @@
-package me.xaxis.ezmoderation.backend.player;
+package me.xaxis.ezmoderation.backend.player.data;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import me.xaxis.ezmoderation.backend.config.ConfigStore;
+import me.xaxis.ezmoderation.backend.player.PlayerProfile;
 
 public class PlayerProfileManager {
 

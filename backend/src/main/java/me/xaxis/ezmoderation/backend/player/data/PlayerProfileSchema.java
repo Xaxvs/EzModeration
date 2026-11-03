@@ -1,4 +1,4 @@
-package me.xaxis.ezmoderation.backend.player;
+package me.xaxis.ezmoderation.backend.player.data;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -7,9 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Locale;
 import me.xaxis.ezmoderation.backend.config.ConfigEntry;
 import me.xaxis.ezmoderation.backend.file.Schema;
-import me.xaxis.ezmoderation.backend.infraction.Infraction;
+import me.xaxis.ezmoderation.backend.player.PlayerProfile;
+import me.xaxis.ezmoderation.backend.player.infraction.Infraction;
 
 public class PlayerProfileSchema implements Schema {
 
@@ -91,7 +93,8 @@ public class PlayerProfileSchema implements Schema {
 
       UUID playerId = Schema.parseUuid(map.get("player-id"));
       Infraction.Type type =
-          Infraction.Type.valueOf(Schema.requireString(map.get("type")).toUpperCase());
+          Infraction.Type.valueOf(
+              Schema.requireString(map.get("type")).toUpperCase(Locale.ROOT));
       String reason = Schema.requireString(map.get("reason"));
       Instant timestamp = Schema.parseInstant(map.get("timestamp"));
       Object expiresAtValue = map.get("expires-at");

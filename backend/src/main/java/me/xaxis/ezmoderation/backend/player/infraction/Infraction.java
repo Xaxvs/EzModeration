@@ -1,4 +1,4 @@
-package me.xaxis.ezmoderation.backend.infraction;
+package me.xaxis.ezmoderation.backend.player.infraction;
 
 import java.time.Instant;
 import java.util.Objects;

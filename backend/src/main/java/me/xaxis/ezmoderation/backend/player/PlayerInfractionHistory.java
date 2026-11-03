@@ -2,7 +2,7 @@ package me.xaxis.ezmoderation.backend.player;
 
 import java.util.ArrayList;
 import java.util.List;
-import me.xaxis.ezmoderation.backend.infraction.Infraction;
+import me.xaxis.ezmoderation.backend.player.infraction.Infraction;
 
 public class PlayerInfractionHistory {
 

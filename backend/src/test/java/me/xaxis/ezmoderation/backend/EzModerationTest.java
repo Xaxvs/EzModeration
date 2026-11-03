@@ -15,8 +15,9 @@ import me.xaxis.ezmoderation.backend.config.*;
 import me.xaxis.ezmoderation.backend.player.PlayerActivity;
 import me.xaxis.ezmoderation.backend.player.PlayerInfractionHistory;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
-import me.xaxis.ezmoderation.backend.player.PlayerProfileSchema;
-import me.xaxis.ezmoderation.backend.infraction.Infraction;
+import me.xaxis.ezmoderation.backend.player.data.PlayerProfileSchema;
+import me.xaxis.ezmoderation.backend.player.data.PlayerProfileManager;
+import me.xaxis.ezmoderation.backend.player.infraction.Infraction;
 import org.junit.jupiter.api.Test;
 
 class EzModerationTest {
@@ -244,12 +245,25 @@ class EzModerationTest {
     Path folder = Files.createTempDirectory("ezmoderation-manager-test");
     PlayerProfile expected = new PlayerProfile(PLAYER_ID, "Alex");
     MemoryProfileStore store = new MemoryProfileStore(expected);
-    me.xaxis.ezmoderation.backend.player.PlayerProfileManager manager =
-        new me.xaxis.ezmoderation.backend.player.PlayerProfileManager(store);
+    PlayerProfileManager manager =
+        new PlayerProfileManager(store);
 
-    assertSame(expected, manager.getPlayerProfile(PLAYER_ID.toString()));
-    assertSame(expected, manager.getPlayerProfile(PLAYER_ID.toString()));
+    assertSame(expected, manager.getPlayerProfile(PLAYER_ID, "Alex"));
+    assertSame(expected, manager.getPlayerProfile(PLAYER_ID, "Alex"));
     assertEquals(1, manager.getPlayerProfiles().spliterator().getExactSizeIfKnown());
+  }
+
+  @Test
+  void profileManagerRejectsMissingPlayerIdentity() {
+    MemoryProfileStore store = new MemoryProfileStore(null);
+    PlayerProfileManager manager = new PlayerProfileManager(store);
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> manager.getPlayerProfile(null, "Alex"));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> manager.getPlayerProfile(PLAYER_ID, null));
   }
 
   @Test
@@ -259,19 +273,19 @@ class EzModerationTest {
 
     assertThrows(
         NullPointerException.class,
-        () -> new me.xaxis.ezmoderation.backend.player.PlayerProfileManager(null));
+        () -> new PlayerProfileManager(null));
   }
 
   @Test
   void profileManagerRejectsStoreReturningWrongProfile() throws Exception {
     UUID otherId = UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
     MemoryProfileStore store = new MemoryProfileStore(new PlayerProfile(otherId, "Other"));
-    me.xaxis.ezmoderation.backend.player.PlayerProfileManager manager =
-        new me.xaxis.ezmoderation.backend.player.PlayerProfileManager(store);
+    PlayerProfileManager manager =
+        new PlayerProfileManager(store);
 
     assertThrows(
         IllegalStateException.class,
-        () -> manager.getPlayerProfile(PLAYER_ID));
+        () -> manager.getPlayerProfile(PLAYER_ID, "Alex"));
   }
 
   private static Map<String, Object> profileValues() {

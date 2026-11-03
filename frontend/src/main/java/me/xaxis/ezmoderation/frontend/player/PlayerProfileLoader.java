@@ -9,7 +9,7 @@ import me.xaxis.ezmoderation.backend.config.ConfigFile;
 import me.xaxis.ezmoderation.backend.config.ConfigSource;
 import me.xaxis.ezmoderation.backend.config.ConfigValidator;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
-import me.xaxis.ezmoderation.backend.player.PlayerProfileSchema;
+import me.xaxis.ezmoderation.backend.player.data.PlayerProfileSchema;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -18,7 +18,7 @@ final class PlayerProfileLoader implements ConfigSource {
   private final FileConfiguration yaml;
   private final Logger logger;
   private final UUID playerId;
-  private final boolean writeDefaults;
+  private boolean writeDefaults;
   private final ConfigFile configFile;
 
   PlayerProfileLoader(Path path, Logger logger, UUID playerId) {
@@ -49,6 +49,7 @@ final class PlayerProfileLoader implements ConfigSource {
 
     if (writeDefaults) {
       write(PlayerProfileSchema.defaults(playerId));
+      writeDefaults = false;
     }
 
     ConfigValidator configValidator = new ConfigValidator(this, logger);
