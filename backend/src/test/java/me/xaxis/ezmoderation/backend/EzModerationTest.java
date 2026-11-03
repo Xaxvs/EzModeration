@@ -2,21 +2,20 @@ package me.xaxis.ezmoderation.backend;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import me.xaxis.ezmoderation.backend.config.*;
 import me.xaxis.ezmoderation.backend.player.PlayerActivity;
 import me.xaxis.ezmoderation.backend.player.PlayerInfractionHistory;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
-import me.xaxis.ezmoderation.backend.player.data.PlayerProfileSchema;
 import me.xaxis.ezmoderation.backend.player.data.PlayerProfileManager;
+import me.xaxis.ezmoderation.backend.player.data.PlayerProfileSchema;
 import me.xaxis.ezmoderation.backend.player.infraction.Infraction;
 import org.junit.jupiter.api.Test;
 
@@ -24,10 +23,35 @@ class EzModerationTest {
 
   private static final UUID PLAYER_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
 
+  private static Map<String, Object> profileValues() {
+    Map<String, Object> values = new HashMap<>();
+    values.put("player-id", PLAYER_ID.toString());
+    values.put("activity.is-online", true);
+    values.put("activity.last-login-time", 1_700_000_000_000L);
+    values.put("activity.last-logout-time", 1_700_000_001_000L);
+    values.put("activity.last-known-name", "Alex");
+    values.put(
+        "infraction-history.infractions",
+        List.of(
+            Map.of(
+                "player-id",
+                PLAYER_ID.toString(),
+                "type",
+                "WARN",
+                "reason",
+                "testing",
+                "timestamp",
+                1_700_000_000_000L)));
+    values.put("infraction-history.is-banned", true);
+    values.put("infraction-history.is-muted", false);
+    return values;
+  }
+
   @Test
   void validatorAcceptsCompleteProfileSchema() {
     Map<String, Object> values = profileValues();
-    ConfigValidator validator = new ConfigValidator(new MapConfigSource(values), Logger.getAnonymousLogger());
+    ConfigValidator validator =
+        new ConfigValidator(new MapConfigSource(values), Logger.getAnonymousLogger());
 
     assertTrue(validator.validate(values, new PlayerProfileSchema()));
   }
@@ -37,7 +61,8 @@ class EzModerationTest {
     Map<String, Object> values = profileValues();
     values.remove("activity.last-login-time");
     values.put("activity.is-online", "true");
-    ConfigValidator validator = new ConfigValidator(new MapConfigSource(values), Logger.getAnonymousLogger());
+    ConfigValidator validator =
+        new ConfigValidator(new MapConfigSource(values), Logger.getAnonymousLogger());
 
     assertFalse(validator.validate(values, new PlayerProfileSchema()));
   }
@@ -48,31 +73,27 @@ class EzModerationTest {
         new ConfigValidator(new MapConfigSource(Map.of()), Logger.getAnonymousLogger());
 
     assertThrows(
-        IllegalArgumentException.class,
-        () -> validator.validate(null, new PlayerProfileSchema()));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> validator.validate(Map.of(), null));
+        IllegalArgumentException.class, () -> validator.validate(null, new PlayerProfileSchema()));
+    assertThrows(IllegalArgumentException.class, () -> validator.validate(Map.of(), null));
   }
 
   @Test
   void profileLoaderBuildsProfileAndInfraction() {
     Map<String, Object> values = profileValues();
-    PlayerProfile profile =
-        PlayerProfileSchema.load(values).orElseThrow();
+    PlayerProfile profile = PlayerProfileSchema.load(values).orElseThrow();
 
     assertEquals(PLAYER_ID, profile.getPlayerId());
     assertEquals("Alex", profile.getActivity().getLastKnownName());
     assertTrue(profile.getActivity().isOnline());
     assertTrue(profile.getInfractionHistory().isBanned());
     assertEquals(1, profile.getInfractionHistory().getInfractions().size());
-    assertEquals(Infraction.Type.WARN, profile.getInfractionHistory().getInfractions().getFirst().getType());
+    assertEquals(
+        Infraction.Type.WARN, profile.getInfractionHistory().getInfractions().getFirst().getType());
   }
 
   @Test
   void profileSchemaSerializesDomainObjectsToConfigValues() {
-    PlayerProfile profile =
-        PlayerProfileSchema.load(profileValues()).orElseThrow();
+    PlayerProfile profile = PlayerProfileSchema.load(profileValues()).orElseThrow();
 
     Map<String, Object> serialized = PlayerProfileSchema.serialize(profile);
     Object rawInfractions = serialized.get("infraction-history.infractions");
@@ -130,17 +151,16 @@ class EzModerationTest {
     assertThrows(IllegalArgumentException.class, () -> activity.login("", login));
     assertThrows(IllegalArgumentException.class, () -> activity.logout(null));
     assertThrows(
-        IllegalArgumentException.class,
-        () -> new PlayerActivity(false, null, initial, "Alex"));
+        IllegalArgumentException.class, () -> new PlayerActivity(false, null, initial, "Alex"));
     assertThrows(
-        IllegalArgumentException.class,
-        () -> new PlayerActivity(false, initial, initial, " "));
+        IllegalArgumentException.class, () -> new PlayerActivity(false, initial, initial, " "));
   }
 
   @Test
   void historyProtectsItsCollectionAndRejectsNullInfractions() {
     Infraction infraction = Infraction.permanent(PLAYER_ID, Infraction.Type.BAN, "griefing");
-    PlayerInfractionHistory history = new PlayerInfractionHistory(List.of(infraction), false, false);
+    PlayerInfractionHistory history =
+        new PlayerInfractionHistory(List.of(infraction), false, false);
 
     List<Infraction> copy = history.getInfractions();
     assertThrows(UnsupportedOperationException.class, () -> copy.add(infraction));
@@ -164,8 +184,7 @@ class EzModerationTest {
         Infraction.load(
             PLAYER_ID, Infraction.Type.MUTE, "reason", now.minusSeconds(2), now.minusSeconds(1));
     Infraction active =
-        Infraction.load(
-            PLAYER_ID, Infraction.Type.WARN, "reason", now, now.plusSeconds(60));
+        Infraction.load(PLAYER_ID, Infraction.Type.WARN, "reason", now, now.plusSeconds(60));
 
     assertTrue(permanent.isPermanent());
     assertFalse(permanent.isExpired());
@@ -179,43 +198,25 @@ class EzModerationTest {
         () -> Infraction.temporary(PLAYER_ID, Infraction.Type.MUTE, "reason", null));
     assertThrows(
         IllegalArgumentException.class,
-        () ->
-            Infraction.load(
-                PLAYER_ID,
-                Infraction.Type.MUTE,
-                "reason",
-                now,
-                now.minusSeconds(1)));
+        () -> Infraction.load(PLAYER_ID, Infraction.Type.MUTE, "reason", now, now.minusSeconds(1)));
   }
 
   @Test
   void profileRequiresPlayerId() {
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> new PlayerProfile(null, "Alex"));
+    assertThrows(IllegalArgumentException.class, () -> new PlayerProfile(null, "Alex"));
     assertThrows(
         IllegalArgumentException.class,
         () ->
             new PlayerProfile(
-                PLAYER_ID,
-                List.of(),
-                false,
-                false,
-                false,
-                null,
-                Instant.EPOCH,
-                "Alex"));
+                PLAYER_ID, List.of(), false, false, false, null, Instant.EPOCH, "Alex"));
   }
 
   @Test
   void validatorsAndFileWritesRejectNullInputs() throws Exception {
     MapConfigSource source = new MapConfigSource(profileValues());
     assertThrows(
-        NullPointerException.class,
-        () -> new ConfigValidator(null, Logger.getAnonymousLogger()));
-    assertThrows(
-        NullPointerException.class,
-        () -> new ConfigValidator(source, null));
+        NullPointerException.class, () -> new ConfigValidator(null, Logger.getAnonymousLogger()));
+    assertThrows(NullPointerException.class, () -> new ConfigValidator(source, null));
     assertThrows(
         NullPointerException.class,
         () -> me.xaxis.ezmoderation.backend.file.SafeFileWrite.save(null, "data"));
@@ -245,8 +246,7 @@ class EzModerationTest {
     Path folder = Files.createTempDirectory("ezmoderation-manager-test");
     PlayerProfile expected = new PlayerProfile(PLAYER_ID, "Alex");
     MemoryProfileStore store = new MemoryProfileStore(expected);
-    PlayerProfileManager manager =
-        new PlayerProfileManager(store);
+    PlayerProfileManager manager = new PlayerProfileManager(store);
 
     assertSame(expected, manager.getPlayerProfile(PLAYER_ID, "Alex"));
     assertSame(expected, manager.getPlayerProfile(PLAYER_ID, "Alex"));
@@ -258,12 +258,8 @@ class EzModerationTest {
     MemoryProfileStore store = new MemoryProfileStore(null);
     PlayerProfileManager manager = new PlayerProfileManager(store);
 
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> manager.getPlayerProfile(null, "Alex"));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> manager.getPlayerProfile(PLAYER_ID, null));
+    assertThrows(IllegalArgumentException.class, () -> manager.getPlayerProfile(null, "Alex"));
+    assertThrows(IllegalArgumentException.class, () -> manager.getPlayerProfile(PLAYER_ID, null));
   }
 
   @Test
@@ -271,41 +267,16 @@ class EzModerationTest {
     Path folder = Files.createTempDirectory("ezmoderation-manager-null-test");
     MemoryProfileStore store = new MemoryProfileStore(null);
 
-    assertThrows(
-        NullPointerException.class,
-        () -> new PlayerProfileManager(null));
+    assertThrows(NullPointerException.class, () -> new PlayerProfileManager(null));
   }
 
   @Test
   void profileManagerRejectsStoreReturningWrongProfile() throws Exception {
     UUID otherId = UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
     MemoryProfileStore store = new MemoryProfileStore(new PlayerProfile(otherId, "Other"));
-    PlayerProfileManager manager =
-        new PlayerProfileManager(store);
+    PlayerProfileManager manager = new PlayerProfileManager(store);
 
-    assertThrows(
-        IllegalStateException.class,
-        () -> manager.getPlayerProfile(PLAYER_ID, "Alex"));
-  }
-
-  private static Map<String, Object> profileValues() {
-    Map<String, Object> values = new HashMap<>();
-    values.put("player-id", PLAYER_ID.toString());
-    values.put("activity.is-online", true);
-    values.put("activity.last-login-time", 1_700_000_000_000L);
-    values.put("activity.last-logout-time", 1_700_000_001_000L);
-    values.put("activity.last-known-name", "Alex");
-    values.put(
-        "infraction-history.infractions",
-        List.of(
-            Map.of(
-                "player-id", PLAYER_ID.toString(),
-                "type", "WARN",
-                "reason", "testing",
-                "timestamp", 1_700_000_000_000L)));
-    values.put("infraction-history.is-banned", true);
-    values.put("infraction-history.is-muted", false);
-    return values;
+    assertThrows(IllegalStateException.class, () -> manager.getPlayerProfile(PLAYER_ID, "Alex"));
   }
 
   private record MapConfigSource(Map<String, Object> values) implements ConfigSource {
@@ -326,11 +297,9 @@ class EzModerationTest {
     public boolean isValid(String path) {
       return values.containsKey(path);
     }
-
   }
 
-  private static final class MemoryProfileStore
-      implements ConfigStore<PlayerProfile> {
+  private static final class MemoryProfileStore implements ConfigStore<PlayerProfile> {
     private PlayerProfile profile;
     private int saves;
 

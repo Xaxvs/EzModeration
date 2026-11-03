@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public interface ConfigStore<T> {
 
-   Result<T> load(UUID playerId);
+  Result<T> load(UUID playerId);
 
   void save(Result<T> profile);
 

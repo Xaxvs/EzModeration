@@ -33,12 +33,8 @@ public class PlayerProfileManager {
   }
 
   public void saveAllDirtyProfiles() {
-    for (Map.Entry<UUID, ConfigStore.Result<PlayerProfile>> entry : getPlayerProfiles()) {
-      ConfigStore.Result<PlayerProfile> wrapper = entry.getValue();
-      if (wrapper.isDirty()) {
-        store.save(wrapper);
-        wrapper.setDirty(false);
-      }
+    for (UUID uuid : playerProfiles.keySet()) {
+      savePlayerProfile(uuid);
     }
   }
 
@@ -74,10 +70,12 @@ public class PlayerProfileManager {
     if (playerId == null) {
       throw new IllegalArgumentException("playerId cannot be null");
     }
+
     ConfigStore.Result<PlayerProfile> wrapper = playerProfiles.get(playerId);
-    if (wrapper != null && wrapper.isDirty()) {
-      store.save(wrapper);
-      wrapper.setDirty(false);
+    if (wrapper == null || !wrapper.isDirty()) {
+      return;
     }
+    store.save(wrapper);
+    wrapper.setDirty(false);
   }
 }
