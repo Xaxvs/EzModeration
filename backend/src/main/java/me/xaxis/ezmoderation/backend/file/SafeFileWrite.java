@@ -4,17 +4,15 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public final class SafeFileWrite {
 
   private static final AtomicBoolean FALLBACK_WARNING_LOGGED = new AtomicBoolean(false);
 
-  private SafeFileWrite() {
-    throw new IllegalArgumentException("Do not instantiate Atomic Write, it is a utility class.");
-  }
+  private SafeFileWrite() {}
 
   public static void save(Path path, String data) throws IOException {
     Objects.requireNonNull(path, "path");
