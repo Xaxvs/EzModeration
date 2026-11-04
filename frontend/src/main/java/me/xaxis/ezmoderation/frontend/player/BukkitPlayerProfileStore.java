@@ -3,6 +3,7 @@ package me.xaxis.ezmoderation.frontend.player;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
 import me.xaxis.ezmoderation.backend.config.ConfigStore;
@@ -27,42 +28,37 @@ public final class BukkitPlayerProfileStore implements ConfigStore<PlayerProfile
   }
 
   @Override
-  public Result<PlayerProfile> load(UUID playerId) {
+  public Optional<PlayerProfile> load(UUID playerId) {
     if (playerId == null) {
       throw new IllegalArgumentException("playerId cannot be null");
     }
     if (profiles.containsKey(playerId)) {
       PlayerProfileLoader loader = profiles.get(playerId);
       PlayerProfile profile = loader.load();
-      return new Result<>(profile == null, profile);
+      return Optional.ofNullable(profile);
     }
 
     PlayerProfileLoader loader = new PlayerProfileLoader(dataFolder, logger, playerId);
     profiles.put(playerId, loader);
-    boolean shouldSave = loader.shouldSave();
     PlayerProfile profile = loader.load();
-    return new Result<>(shouldSave || profile == null, profile);
+    return Optional.ofNullable(profile);
   }
 
   @Override
-  public void save(Result<PlayerProfile> profile) {
+  public void save(PlayerProfile profile) {
     if (profile == null) {
       throw new IllegalArgumentException("profile cannot be null");
     }
-    if (profile.profile() == null) {
-      throw new IllegalArgumentException("profile value cannot be null");
-    }
-    if (profiles.containsKey(profile.profile().getPlayerId())) {
-      if (!profile.isDirty()) return;
-      PlayerProfileLoader loader = profiles.get(profile.profile().getPlayerId());
-      loader.write(PlayerProfileSchema.serialize(profile.profile()));
+    if (profiles.containsKey(profile.getPlayerId())) {
+      PlayerProfileLoader loader = profiles.get(profile.getPlayerId());
+      loader.write(PlayerProfileSchema.serialize(profile));
       loader.save();
       return;
     }
 
-    UUID playerId = profile.profile().getPlayerId();
+    UUID playerId = profile.getPlayerId();
     PlayerProfileLoader loader = new PlayerProfileLoader(dataFolder, logger, playerId);
-    loader.write(PlayerProfileSchema.serialize(profile.profile()));
+    loader.write(PlayerProfileSchema.serialize(profile));
     loader.save();
   }
 }

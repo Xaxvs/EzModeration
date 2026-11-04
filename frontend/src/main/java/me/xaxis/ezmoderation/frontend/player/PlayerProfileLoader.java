@@ -6,15 +6,16 @@ import java.util.UUID;
 import java.util.logging.Logger;
 import me.xaxis.ezmoderation.backend.config.ConfigEntry;
 import me.xaxis.ezmoderation.backend.config.ConfigFile;
-import me.xaxis.ezmoderation.backend.config.ConfigSource;
 import me.xaxis.ezmoderation.backend.config.ConfigValidator;
+import me.xaxis.ezmoderation.backend.config.Loader;
 import me.xaxis.ezmoderation.backend.file.FileUtils;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
 import me.xaxis.ezmoderation.backend.player.data.PlayerProfileSchema;
+import me.xaxis.ezmoderation.frontend.utils.SourceUtils;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-final class PlayerProfileLoader implements ConfigSource {
+final class PlayerProfileLoader implements Loader<PlayerProfile> {
 
   private final FileConfiguration yaml;
   private final Logger logger;
@@ -24,28 +25,17 @@ final class PlayerProfileLoader implements ConfigSource {
 
   PlayerProfileLoader(Path path, Logger logger, UUID playerId) {
     this.configFile = new ConfigFile(path, playerId + ".yml");
+    this.writeDefaults = configFile.initialize();
     this.yaml = YamlConfiguration.loadConfiguration(configFile.getPath().toFile());
     this.logger = logger;
     this.playerId = playerId;
-    this.writeDefaults = configFile.initialize();
-  }
-
-  private boolean isUuid(String value) {
-    if (value == null) {
-      return false;
-    }
-    try {
-      UUID.fromString(value);
-      return true;
-    } catch (IllegalArgumentException exception) {
-      return false;
-    }
   }
 
   public boolean shouldSave() {
     return writeDefaults;
   }
 
+  @Override
   public PlayerProfile load() {
 
     if (writeDefaults) {
@@ -73,31 +63,21 @@ final class PlayerProfileLoader implements ConfigSource {
 
   @Override
   public boolean isInstance(String path, ConfigEntry.Type expectedType) {
-    return switch (expectedType) {
-      case UUID -> yaml.isString(path) && isUuid(yaml.getString(path));
-      case STRING -> yaml.isString(path);
-      case INTEGER -> yaml.isInt(path);
-      case LONG -> yaml.isLong(path) || yaml.isInt(path);
-      case BOOLEAN -> yaml.isBoolean(path);
-      case DOUBLE -> yaml.isDouble(path) || yaml.isInt(path);
-      case LIST -> yaml.isList(path);
-    };
+    return SourceUtils.isInstance(path, expectedType, yaml);
   }
 
   @Override
   public boolean isValid(String path) {
-    return yaml.isSet(path);
+    return SourceUtils.isValid(path, yaml);
   }
 
+  @Override
   public void write(Map<String, Object> values) {
     values.forEach(yaml::set);
   }
 
+  @Override
   public void save() {
-    configFile.save(saveToString());
-  }
-
-  public String saveToString() {
-    return yaml.saveToString();
+    configFile.save(yaml.saveToString());
   }
 }

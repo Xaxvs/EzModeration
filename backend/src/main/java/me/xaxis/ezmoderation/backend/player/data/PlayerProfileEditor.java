@@ -1,7 +1,6 @@
 package me.xaxis.ezmoderation.backend.player.data;
 
 import java.time.Instant;
-
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
 import me.xaxis.ezmoderation.backend.player.infraction.Infraction;
 

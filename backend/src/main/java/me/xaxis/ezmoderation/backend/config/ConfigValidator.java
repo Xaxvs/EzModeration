@@ -3,10 +3,10 @@ package me.xaxis.ezmoderation.backend.config;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public record ConfigValidator(ConfigSource configSource, Logger logger) {
+public record ConfigValidator(Loader loader, Logger logger) {
 
   public ConfigValidator {
-    if (configSource == null) {
+    if (loader == null) {
       throw new NullPointerException("Config source cannot be null");
     }
     if (logger == null) {
@@ -15,7 +15,7 @@ public record ConfigValidator(ConfigSource configSource, Logger logger) {
   }
 
   private boolean checkObjectType(ConfigEntry.Type expectedType, Object object, String path) {
-    if (object == null || !configSource.isInstance(path, expectedType)) {
+    if (object == null || !loader.isInstance(path, expectedType)) {
       logger.warning(
           "Config entry type mismatch for path: "
               + path
@@ -36,7 +36,7 @@ public record ConfigValidator(ConfigSource configSource, Logger logger) {
     for (int i = 0; i < schema.getEntries().size(); i++) {
       ConfigEntry entry = schema.getEntries().get(i);
       ConfigEntry.Type expectedType = entry.type();
-      if (!configSource.isValid(entry.path())) {
+      if (!loader.isValid(entry.path())) {
         logger.warning("Missing config entry: " + entry.path());
         isValid = false;
         continue;

@@ -1,10 +1,6 @@
 package me.xaxis.ezmoderation.backend.player.data;
 
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import me.xaxis.ezmoderation.backend.config.ConfigStore;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
 import me.xaxis.ezmoderation.backend.player.response.PlayerActivityResponse;
@@ -13,7 +9,8 @@ import me.xaxis.ezmoderation.backend.player.response.PlayerProfileResponse;
 
 public class PlayerProfileManager {
 
-  private final Map<UUID, ConfigStore.Result<PlayerProfile>> playerProfiles = new HashMap<>();
+  private final Map<UUID, PlayerProfile> playerProfiles = new HashMap<>();
+  private final Set<UUID> dirtyProfiles = new HashSet<>();
   private final ConfigStore<PlayerProfile> store;
 
   public PlayerProfileManager(ConfigStore<PlayerProfile> store) {
@@ -23,12 +20,8 @@ public class PlayerProfileManager {
     this.store = store;
   }
 
-  public Iterable<AbstractMap.SimpleEntry<UUID, PlayerProfileResponse>> getPlayerProfiles() {
-    return playerProfiles.entrySet().stream()
-        .map(entry ->
-            new AbstractMap.SimpleEntry<>(
-                entry.getKey(), toProfileResponse(entry.getValue().profile())))
-        .toList();
+  public Iterable<PlayerProfileResponse> getPlayerProfiles() {
+    return playerProfiles.values().stream().map(this::toProfileResponse).toList();
   }
 
   private PlayerActivityResponse toActivityResponse(PlayerProfile playerProfile) {
@@ -54,8 +47,8 @@ public class PlayerProfileManager {
 
   public void saveAllDirtyProfiles() {
     for (var entry : playerProfiles.entrySet()) {
-      if (entry.getValue().isDirty()) {
-        savePlayerProfile(entry.getKey());
+      if (dirtyProfiles.contains(entry.getKey())) {
+        savePlayerProfile(entry.getValue());
       }
     }
   }
@@ -64,11 +57,11 @@ public class PlayerProfileManager {
     if (playerId == null) {
       throw new IllegalArgumentException("playerId cannot be null");
     }
-    ConfigStore.Result<PlayerProfile> wrapper = playerProfiles.get(playerId);
+    PlayerProfile wrapper = playerProfiles.get(playerId);
     if (wrapper == null) {
       throw new IllegalStateException("Player profile not found for playerId: " + playerId);
     }
-    return new PlayerProfileEditor(wrapper.profile(), wrapper::setDirty);
+    return new PlayerProfileEditor(wrapper, () -> dirtyProfiles.add(playerId));
   }
 
   public Optional<PlayerProfileResponse> getProfile(UUID playerId) {
@@ -76,7 +69,7 @@ public class PlayerProfileManager {
       throw new IllegalArgumentException("playerId cannot be null");
     }
     if (playerProfiles.containsKey(playerId)) {
-      return Optional.of(toProfileResponse(playerProfiles.get(playerId).profile()));
+      return Optional.of(toProfileResponse(playerProfiles.get(playerId)));
     } else return Optional.empty();
   }
 
@@ -88,40 +81,39 @@ public class PlayerProfileManager {
       throw new IllegalArgumentException("playerName cannot be null or blank");
     }
     return toProfileResponse(
-        playerProfiles
-            .computeIfAbsent(playerId, id -> initializePlayerProfile(playerId, playerName))
-            .profile());
+        playerProfiles.computeIfAbsent(
+            playerId, id -> initializePlayerProfile(playerId, playerName)));
   }
 
-  private ConfigStore.Result<PlayerProfile> initializePlayerProfile(
-      UUID playerId, String playerName) {
+  private PlayerProfile initializePlayerProfile(UUID playerId, String playerName) {
     if (playerId == null) {
       throw new IllegalArgumentException("playerId cannot be null");
     }
     if (playerName == null || playerName.isBlank()) {
       throw new IllegalArgumentException("playerName cannot be null or blank");
     }
-    ConfigStore.Result<PlayerProfile> result = store.load(playerId);
-    PlayerProfile playerProfile = result.profile();
-    if (playerProfile != null && !playerId.equals(playerProfile.getPlayerId())) {
+    Optional<PlayerProfile> profileOptional = store.load(playerId);
+    PlayerProfile playerProfile;
+    if (profileOptional.isPresent() && !playerId.equals(profileOptional.get().getPlayerId())) {
       throw new IllegalStateException("Profile store returned a different player ID");
     }
-    if (playerProfile == null) {
+    if (profileOptional.isEmpty()) {
       playerProfile = new PlayerProfile(playerId, playerName);
-      result.setDirty();
-    }
-    return new ConfigStore.Result<>(result.isDirty(), playerProfile);
+      dirtyProfiles.add(playerId);
+    } else playerProfile = profileOptional.get();
+
+    return playerProfile;
   }
 
-  private void savePlayerProfile(ConfigStore.Result<PlayerProfile> wrapper) {
-    if (wrapper == null) {
-      throw new IllegalArgumentException("wrapper cannot be null");
+  private void savePlayerProfile(PlayerProfile profile) {
+    if (profile == null) {
+      throw new IllegalArgumentException("profile cannot be null");
     }
-    if (!wrapper.isDirty()) {
+    if (!dirtyProfiles.contains(profile.getPlayerId())) {
       return;
     }
-    store.save(wrapper);
-    wrapper.setClean();
+    store.save(profile);
+    dirtyProfiles.remove(profile.getPlayerId());
   }
 
   public void savePlayerProfile(UUID playerId) {
@@ -129,11 +121,11 @@ public class PlayerProfileManager {
       throw new IllegalArgumentException("playerId cannot be null");
     }
 
-    ConfigStore.Result<PlayerProfile> wrapper = playerProfiles.get(playerId);
-    if (wrapper == null || !wrapper.isDirty()) {
+    PlayerProfile profile = playerProfiles.get(playerId);
+    if (profile == null || !dirtyProfiles.contains(playerId)) {
       return;
     }
-    store.save(wrapper);
-    wrapper.setClean();
+    store.save(profile);
+    dirtyProfiles.remove(playerId);
   }
 }
