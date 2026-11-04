@@ -20,7 +20,7 @@ public class PlayerProfileManager {
     this.store = store;
   }
 
-  public Iterable<PlayerProfileResponse> getPlayerProfiles() {
+  public List<PlayerProfileResponse> getPlayerProfiles() {
     return playerProfiles.values().stream().map(this::toProfileResponse).toList();
   }
 
@@ -64,7 +64,7 @@ public class PlayerProfileManager {
     return new PlayerProfileEditor(wrapper, () -> dirtyProfiles.add(playerId));
   }
 
-  public Optional<PlayerProfileResponse> getProfile(UUID playerId) {
+  public Optional<PlayerProfileResponse> findProfile(UUID playerId) {
     if (playerId == null) {
       throw new IllegalArgumentException("playerId cannot be null");
     }

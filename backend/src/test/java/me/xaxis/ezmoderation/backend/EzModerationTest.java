@@ -96,6 +96,8 @@ class EzModerationTest {
 
     Map<String, Object> serialized = PlayerProfileSchema.serialize(profile);
     assertFalse(serialized.containsKey("activity.is-online"));
+    assertEquals(1_700_000_000_000L, serialized.get("activity.last-login-time"));
+    assertEquals(1_700_000_001_000L, serialized.get("activity.last-logout-time"));
     Object rawInfractions = serialized.get("infraction-history.infractions");
 
     assertInstanceOf(List.class, rawInfractions);
@@ -241,7 +243,7 @@ class EzModerationTest {
     PlayerProfileManager manager = new PlayerProfileManager(store);
 
     assertEquals("Alex", manager.loadOrCreateProfile(PLAYER_ID, "Alex").name());
-    assertEquals("Alex", manager.getProfile(PLAYER_ID).orElseThrow().name());
+    assertEquals("Alex", manager.findProfile(PLAYER_ID).orElseThrow().name());
     assertEquals(1, manager.getPlayerProfiles().spliterator().getExactSizeIfKnown());
   }
 
@@ -271,7 +273,7 @@ class EzModerationTest {
     manager.loadOrCreateProfile(PLAYER_ID, "Changed");
 
     assertEquals(1, store.loads);
-    assertEquals("Alex", manager.getProfile(PLAYER_ID).orElseThrow().name());
+    assertEquals("Alex", manager.findProfile(PLAYER_ID).orElseThrow().name());
   }
 
   @Test
@@ -308,7 +310,7 @@ class EzModerationTest {
     PlayerProfileManager manager = new PlayerProfileManager(store);
     manager.loadOrCreateProfile(PLAYER_ID, "Alex");
 
-    PlayerProfileResponse response = manager.getProfile(PLAYER_ID).orElseThrow();
+    PlayerProfileResponse response = manager.findProfile(PLAYER_ID).orElseThrow();
     assertEquals(PLAYER_ID.toString(), response.uuid());
     assertThrows(
         UnsupportedOperationException.class,
@@ -321,7 +323,7 @@ class EzModerationTest {
     MemoryProfileStore store = new MemoryProfileStore(null);
     PlayerProfileManager manager = new PlayerProfileManager(store);
 
-    assertThrows(IllegalArgumentException.class, () -> manager.getProfile(null));
+    assertThrows(IllegalArgumentException.class, () -> manager.findProfile(null));
   }
 
   @Test
