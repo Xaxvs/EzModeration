@@ -8,17 +8,28 @@ import java.util.UUID;
 public class Infraction {
 
   private final UUID playerId;
+  private final String issuerName;
   private final Type type;
   private final String reason;
   private final Instant timestamp;
   private final Instant expiresAt;
 
-  Infraction(UUID playerId, Type type, String reason, Instant expiresAt) {
-    this(playerId, type, reason, Instant.now(), expiresAt);
+  Infraction(UUID playerId, String issuerName, Type type, String reason, Instant expiresAt) {
+    this(playerId, issuerName, type, reason, Instant.now(), expiresAt);
   }
 
-  Infraction(UUID playerId, Type type, String reason, Instant timestamp, Instant expiresAt) {
+  Infraction(
+      UUID playerId,
+      String issuerName,
+      Type type,
+      String reason,
+      Instant timestamp,
+      Instant expiresAt) {
     this.playerId = Objects.requireNonNull(playerId, "playerId");
+    if (issuerName == null || issuerName.isBlank()) {
+      throw new IllegalArgumentException("issuerName cannot be blank");
+    }
+    this.issuerName = issuerName;
     this.type = Objects.requireNonNull(type, "type");
     if (reason == null || reason.isBlank()) {
       throw new IllegalArgumentException("reason cannot be blank");
@@ -31,18 +42,24 @@ public class Infraction {
     this.expiresAt = expiresAt;
   }
 
-  public static Infraction temporary(UUID playerId, Type type, String reason, Instant expiresAt) {
+  public static Infraction temporary(
+      UUID playerId, String issuerName, Type type, String reason, Instant expiresAt) {
     Objects.requireNonNull(expiresAt, "expiresAt");
-    return new Infraction(playerId, type, reason, expiresAt) {};
+    return new Infraction(playerId, issuerName, type, reason, expiresAt) {};
   }
 
-  public static Infraction permanent(UUID playerId, Type type, String reason) {
-    return new Infraction(playerId, type, reason, null) {};
+  public static Infraction permanent(UUID playerId, String issuerName, Type type, String reason) {
+    return new Infraction(playerId, issuerName, type, reason, null) {};
   }
 
   public static Infraction load(
-      UUID playerId, Type type, String reason, Instant timestamp, Instant expiresAt) {
-    return new Infraction(playerId, type, reason, timestamp, expiresAt) {};
+      UUID playerId,
+      String issuerName,
+      Type type,
+      String reason,
+      Instant timestamp,
+      Instant expiresAt) {
+    return new Infraction(playerId, issuerName, type, reason, timestamp, expiresAt) {};
   }
 
   public UUID getPlayerId() {
@@ -51,6 +68,10 @@ public class Infraction {
 
   public Instant getTimestamp() {
     return timestamp;
+  }
+
+  public String getIssuerName() {
+    return issuerName;
   }
 
   public String getReason() {

@@ -17,6 +17,7 @@ public class PlayerProfileManager {
 
   private final Map<UUID, PlayerProfile> playerProfiles = new HashMap<>();
   private final Set<UUID> dirtyProfiles = new HashSet<>();
+  private final Map<String, UUID> nameToIdMap = new HashMap<>();
   private final ConfigStore<PlayerProfile> store;
 
   public PlayerProfileManager(ConfigStore<PlayerProfile> store) {
@@ -75,8 +76,18 @@ public class PlayerProfileManager {
       throw new IllegalArgumentException("playerId cannot be null");
     }
     if (playerProfiles.containsKey(playerId)) {
-      return Optional.of(toProfileResponse(playerProfiles.get(playerId)));
-    } else return Optional.empty();
+      PlayerProfile profile = playerProfiles.get(playerId);
+      nameToIdMap.put(profile.getActivity().getLastKnownName(), playerId);
+      return Optional.of(toProfileResponse(profile));
+    }
+    return Optional.empty();
+  }
+
+  public UUID getPlayerIdByName(String playerName) {
+    if (playerName == null || playerName.isBlank()) {
+      throw new IllegalArgumentException("playerName cannot be null or blank");
+    }
+    return nameToIdMap.get(playerName);
   }
 
   public PlayerProfileResponse loadOrCreateProfile(UUID playerId, String playerName) {
@@ -86,9 +97,9 @@ public class PlayerProfileManager {
     if (playerName == null || playerName.isBlank()) {
       throw new IllegalArgumentException("playerName cannot be null or blank");
     }
+    nameToIdMap.put(playerName, playerId);
     return toProfileResponse(
-        playerProfiles.computeIfAbsent(
-            playerId, id -> initializePlayerProfile(playerId, playerName)));
+        playerProfiles.computeIfAbsent(playerId, id -> initializePlayerProfile(id, playerName)));
   }
 
   private PlayerProfile initializePlayerProfile(UUID playerId, String playerName) {

@@ -48,14 +48,14 @@ final class PlayerProfileLoader implements Loader<PlayerProfile> {
 
     ConfigValidator configValidator = new ConfigValidator(this, logger);
     if (!configValidator.validate(yaml.getValues(true), new PlayerProfileSchema())) {
-      return recoverCorruptProfile();
+      return isolateAndCreateProfile();
     }
 
     return PlayerProfileSchema.createFrom(yaml.getValues(true))
-        .orElseGet(this::recoverCorruptProfile);
+        .orElseGet(this::isolateAndCreateProfile);
   }
 
-  private PlayerProfile recoverCorruptProfile() {
+  private PlayerProfile isolateAndCreateProfile() {
     FileUtils.isolateFile(configFile.getPath());
     configFile.initialize();
     yaml = YamlConfiguration.loadConfiguration(configFile.getPath().toFile());

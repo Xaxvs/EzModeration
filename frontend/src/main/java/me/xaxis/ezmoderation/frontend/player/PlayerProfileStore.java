@@ -9,13 +9,13 @@ import java.util.logging.Logger;
 import me.xaxis.ezmoderation.backend.config.ConfigStore;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
 
-public final class BukkitPlayerProfileStore implements ConfigStore<PlayerProfile> {
+public final class PlayerProfileStore implements ConfigStore<PlayerProfile> {
 
   private final Path dataFolder;
   private final Logger logger;
   private final Map<UUID, PlayerProfileLoader> profiles = new HashMap<>();
 
-  public BukkitPlayerProfileStore(Path dataFolder, Logger logger) {
+  public PlayerProfileStore(Path dataFolder, Logger logger) {
     if (dataFolder == null) {
       throw new NullPointerException("dataFolder cannot be null");
     }

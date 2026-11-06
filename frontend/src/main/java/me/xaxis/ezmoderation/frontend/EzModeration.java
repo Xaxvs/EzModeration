@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.util.UUID;
 import me.xaxis.ezmoderation.backend.player.data.PlayerProfileManager;
 import me.xaxis.ezmoderation.backend.settings.ConfigSettings;
-import me.xaxis.ezmoderation.frontend.player.BukkitPlayerProfileStore;
 import me.xaxis.ezmoderation.frontend.player.PlayerLifecycleListener;
+import me.xaxis.ezmoderation.frontend.player.PlayerProfileStore;
 import me.xaxis.ezmoderation.frontend.settings.ConfigSettingsLoader;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -47,8 +47,8 @@ public class EzModeration extends JavaPlugin {
       return;
     }
 
-    BukkitPlayerProfileStore playerProfileStore =
-        new BukkitPlayerProfileStore(getDataFolder().toPath(), getLogger());
+    PlayerProfileStore playerProfileStore =
+        new PlayerProfileStore(getDataFolder().toPath(), getLogger());
 
     playerProfileManager = new PlayerProfileManager(playerProfileStore);
     getServer()
@@ -85,7 +85,7 @@ public class EzModeration extends JavaPlugin {
     if (configSettingsLoader != null) {
       configSettingsLoader.save();
     }
-    if(autoSaveTask != null && !autoSaveTask.isCancelled()) {
+    if (autoSaveTask != null && !autoSaveTask.isCancelled()) {
       autoSaveTask.cancel();
     }
   }

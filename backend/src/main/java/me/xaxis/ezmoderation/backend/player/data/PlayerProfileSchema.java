@@ -63,6 +63,7 @@ public class PlayerProfileSchema implements Schema {
   private static Map<String, Object> serializeInfraction(Infraction infraction) {
     Map<String, Object> values = new LinkedHashMap<>();
     values.put("player-id", infraction.getPlayerId().toString());
+    values.put("issuer-name", infraction.getIssuerName());
     values.put("type", infraction.getType().name());
     values.put("reason", infraction.getReason());
     values.put("timestamp", infraction.getTimestamp().toEpochMilli());
@@ -82,13 +83,15 @@ public class PlayerProfileSchema implements Schema {
       }
 
       UUID playerId = Schema.parseUuid(map.get("player-id"));
+      String issuerName = Schema.requireString(map.get("issuer-name"));
       Infraction.Type type =
           Infraction.Type.valueOf(Schema.requireString(map.get("type")).toUpperCase(Locale.ROOT));
       String reason = Schema.requireString(map.get("reason"));
       Instant timestamp = Schema.parseInstant(map.get("timestamp"));
       Object expiresAtValue = map.get("expires-at");
       Instant expiresAt = expiresAtValue == null ? null : Schema.parseInstant(expiresAtValue);
-      infractions.add(Infraction.load(playerId, type, reason, timestamp, expiresAt));
+      infractions.add(
+          Infraction.load(playerId, issuerName, type, reason, timestamp, expiresAt));
     }
     return List.copyOf(infractions);
   }

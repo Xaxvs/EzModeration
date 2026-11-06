@@ -37,6 +37,8 @@ class EzModerationTest {
             Map.of(
                 "player-id",
                 PLAYER_ID.toString(),
+                "issuer-name",
+                "Console",
                 "type",
                 "WARN",
                 "reason",
@@ -104,6 +106,7 @@ class EzModerationTest {
     Object rawInfraction = ((List<?>) rawInfractions).getFirst();
     assertInstanceOf(Map.class, rawInfraction);
     assertEquals("WARN", ((Map<?, ?>) rawInfraction).get("type"));
+    assertEquals("Console", ((Map<?, ?>) rawInfraction).get("issuer-name"));
     assertEquals(1_700_000_000_000L, ((Map<?, ?>) rawInfraction).get("timestamp"));
     assertFalse(((Map<?, ?>) rawInfraction).containsKey("expires-at"));
   }
@@ -128,7 +131,8 @@ class EzModerationTest {
   @Test
   void profileRejectsInfractionsBelongingToAnotherPlayer() {
     UUID otherPlayerId = UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
-    Infraction infraction = Infraction.permanent(otherPlayerId, Infraction.Type.WARN, "testing");
+    Infraction infraction =
+        Infraction.permanent(otherPlayerId, "Console", Infraction.Type.WARN, "testing");
 
     assertThrows(
         IllegalArgumentException.class,
@@ -177,7 +181,8 @@ class EzModerationTest {
 
   @Test
   void historyProtectsItsCollectionAndRejectsNullInfractions() {
-    Infraction infraction = Infraction.permanent(PLAYER_ID, Infraction.Type.BAN, "griefing");
+    Infraction infraction =
+        Infraction.permanent(PLAYER_ID, "Console", Infraction.Type.BAN, "griefing");
     PlayerInfractionHistory history = new PlayerInfractionHistory(List.of(infraction));
 
     List<Infraction> copy = history.getInfractions();
@@ -191,12 +196,19 @@ class EzModerationTest {
   @Test
   void infractionsRespectPermanentAndExpirationSemantics() {
     Instant now = Instant.now();
-    Infraction permanent = Infraction.permanent(PLAYER_ID, Infraction.Type.BAN, "reason");
+    Infraction permanent =
+        Infraction.permanent(PLAYER_ID, "Console", Infraction.Type.BAN, "reason");
     Infraction expired =
         Infraction.load(
-            PLAYER_ID, Infraction.Type.MUTE, "reason", now.minusSeconds(2), now.minusSeconds(1));
+            PLAYER_ID,
+            "Console",
+            Infraction.Type.MUTE,
+            "reason",
+            now.minusSeconds(2),
+            now.minusSeconds(1));
     Infraction active =
-        Infraction.load(PLAYER_ID, Infraction.Type.WARN, "reason", now, now.plusSeconds(60));
+        Infraction.load(
+            PLAYER_ID, "Console", Infraction.Type.WARN, "reason", now, now.plusSeconds(60));
 
     assertTrue(permanent.isPermanent());
     assertFalse(permanent.isExpired());
@@ -204,13 +216,20 @@ class EzModerationTest {
     assertFalse(active.isExpired());
     assertThrows(
         IllegalArgumentException.class,
-        () -> Infraction.permanent(PLAYER_ID, Infraction.Type.BAN, " "));
+        () -> Infraction.permanent(PLAYER_ID, "Console", Infraction.Type.BAN, " "));
     assertThrows(
         NullPointerException.class,
-        () -> Infraction.temporary(PLAYER_ID, Infraction.Type.MUTE, "reason", null));
+        () -> Infraction.temporary(PLAYER_ID, "Console", Infraction.Type.MUTE, "reason", null));
     assertThrows(
         IllegalArgumentException.class,
-        () -> Infraction.load(PLAYER_ID, Infraction.Type.MUTE, "reason", now, now.minusSeconds(1)));
+        () ->
+            Infraction.load(
+                PLAYER_ID,
+                "Console",
+                Infraction.Type.MUTE,
+                "reason",
+                now,
+                now.minusSeconds(1)));
   }
 
   @Test
@@ -310,7 +329,8 @@ class EzModerationTest {
     PlayerProfileManager manager = new PlayerProfileManager(store);
     manager.loadOrCreateProfile(PLAYER_ID, "Alex");
 
-    Infraction infraction = Infraction.permanent(PLAYER_ID, Infraction.Type.BAN, "testing");
+    Infraction infraction =
+        Infraction.permanent(PLAYER_ID, "Console", Infraction.Type.BAN, "testing");
     manager.editProfile(PLAYER_ID).addInfraction(infraction);
     manager.saveAllDirtyProfiles();
     assertEquals(1, store.saves);
@@ -342,7 +362,7 @@ class EzModerationTest {
     assertThrows(
         UnsupportedOperationException.class,
         () -> response.playerInfractionHistory().infractions().add(
-            Infraction.permanent(PLAYER_ID, Infraction.Type.WARN, "testing")));
+            Infraction.permanent(PLAYER_ID, "Console", Infraction.Type.WARN, "testing")));
   }
 
   @Test

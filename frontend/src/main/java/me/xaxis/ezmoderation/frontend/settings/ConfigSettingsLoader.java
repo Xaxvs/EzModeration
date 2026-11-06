@@ -8,7 +8,7 @@ import me.xaxis.ezmoderation.backend.config.ConfigFile;
 import me.xaxis.ezmoderation.backend.config.ConfigValidator;
 import me.xaxis.ezmoderation.backend.config.Loader;
 import me.xaxis.ezmoderation.backend.settings.ConfigSettings;
-import me.xaxis.ezmoderation.backend.settings.data.ConfigSettingsSchema;
+import me.xaxis.ezmoderation.backend.settings.ConfigSettingsSchema;
 import me.xaxis.ezmoderation.frontend.utils.SourceUtils;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
