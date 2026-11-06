@@ -22,6 +22,13 @@ public class PlayerProfile {
     if (playerId == null) {
       throw new IllegalArgumentException("Player ID is required");
     }
+    if (infractions == null
+        || infractions.stream()
+            .anyMatch(
+                infraction ->
+                    infraction == null || !playerId.equals(infraction.getPlayerId()))) {
+      throw new IllegalArgumentException("Infractions must belong to the player profile");
+    }
     this.playerId = playerId;
     this.activity = new PlayerActivity(isOnline, lastLoginTime, lastLogoutTime, lastKnownName);
     this.infractionHistory = new PlayerInfractionHistory(infractions);

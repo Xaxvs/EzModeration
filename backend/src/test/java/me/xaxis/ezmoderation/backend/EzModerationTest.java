@@ -126,6 +126,23 @@ class EzModerationTest {
   }
 
   @Test
+  void profileRejectsInfractionsBelongingToAnotherPlayer() {
+    UUID otherPlayerId = UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
+    Infraction infraction = Infraction.permanent(otherPlayerId, Infraction.Type.WARN, "testing");
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new PlayerProfile(
+                PLAYER_ID,
+                List.of(infraction),
+                false,
+                Instant.EPOCH,
+                Instant.EPOCH,
+                "Alex"));
+  }
+
+  @Test
   void profileLoaderHandlesRepeatedLoads() {
     for (int i = 0; i < 10_000; i++) {
       Map<String, Object> values = profileValues();
@@ -233,6 +250,16 @@ class EzModerationTest {
     assertTrue(Files.exists(folder.resolve("profile.yml")));
     file.delete();
     assertFalse(Files.exists(folder.resolve("profile.yml")));
+  }
+
+  @Test
+  void configFileAllowsEmptyConfigurationContent() throws Exception {
+    Path folder = Files.createTempDirectory("ezmoderation-empty-config-test");
+    ConfigFile file = new ConfigFile(folder, "config.yml");
+
+    file.save("");
+
+    assertEquals("", Files.readString(file.getPath()));
   }
 
   @Test

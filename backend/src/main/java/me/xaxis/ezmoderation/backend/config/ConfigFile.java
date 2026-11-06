@@ -16,8 +16,8 @@ public class ConfigFile {
   }
 
   public void save(String content) {
-    if (content == null || content.isBlank()) {
-      throw new IllegalArgumentException("Content cannot be null or blank");
+    if (content == null) {
+      throw new IllegalArgumentException("Content cannot be null");
     }
     try {
       SafeFileWrite.save(path, content);

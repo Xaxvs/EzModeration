@@ -58,6 +58,7 @@ public final class BukkitPlayerProfileStore implements ConfigStore<PlayerProfile
 
     UUID playerId = profile.getPlayerId();
     PlayerProfileLoader loader = new PlayerProfileLoader(dataFolder, logger, playerId);
+    profiles.put(playerId, loader);
     loader.write(PlayerProfileSchema.serialize(profile));
     loader.save();
   }
