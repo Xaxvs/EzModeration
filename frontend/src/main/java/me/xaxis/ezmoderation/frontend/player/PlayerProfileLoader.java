@@ -55,6 +55,7 @@ final class PlayerProfileLoader implements Loader<PlayerProfile> {
 
   private PlayerProfile recoverCorruptProfile() {
     FileUtils.isolateFile(configFile.getPath());
+    configFile.initialize();
     logger.severe(
         "Failed to load player profile. The file has been isolated. "
             + "Please check the logs for more information. "
