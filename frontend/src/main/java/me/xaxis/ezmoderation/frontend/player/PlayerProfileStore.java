@@ -26,13 +26,17 @@ public final class PlayerProfileStore implements ConfigStore<PlayerProfile> {
     this.logger = logger;
   }
 
+  public Path getPath() {
+    return dataFolder.resolve("player-profiles");
+  }
+
   @Override
   public LoadResult<PlayerProfile> get(UUID playerId) {
     if (playerId == null) {
       throw new IllegalArgumentException("playerId cannot be null");
     }
     PlayerProfileLoader loader =
-        profiles.computeIfAbsent(playerId, id -> new PlayerProfileLoader(dataFolder, logger, id));
+        profiles.computeIfAbsent(playerId, id -> new PlayerProfileLoader(getPath(), logger, id));
     PlayerProfile profile = loader.load();
     return new LoadResult<>(Optional.ofNullable(profile), loader.requiresSave());
   }
@@ -44,7 +48,7 @@ public final class PlayerProfileStore implements ConfigStore<PlayerProfile> {
     }
     PlayerProfileLoader loader =
         profiles.computeIfAbsent(
-            profile.getPlayerId(), id -> new PlayerProfileLoader(dataFolder, logger, id));
+            profile.getPlayerId(), id -> new PlayerProfileLoader(getPath(), logger, id));
     loader.save(profile);
   }
 }

@@ -1,5 +1,7 @@
-package me.xaxis.ezmoderation.backend.player.data;
+package me.xaxis.ezmoderation.backend.player;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,7 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import me.xaxis.ezmoderation.backend.config.ConfigStore;
-import me.xaxis.ezmoderation.backend.player.PlayerProfile;
+import me.xaxis.ezmoderation.backend.file.FileUtils;
 import me.xaxis.ezmoderation.backend.player.response.PlayerActivityResponse;
 import me.xaxis.ezmoderation.backend.player.response.PlayerInfractionHistoryResponse;
 import me.xaxis.ezmoderation.backend.player.response.PlayerProfileResponse;
@@ -25,6 +27,38 @@ public class PlayerProfileManager {
       throw new NullPointerException("store cannot be null");
     }
     this.store = store;
+  }
+
+  public void cachePlayerProfiles(Path folderPath, Runnable callback) {
+    File[] files = FileUtils.getFiles(folderPath);
+    for (File file : files) {
+      if (!file.isFile()) continue;
+      if (!file.getName().endsWith(".yml")) continue;
+      if (file.getName().contains("corrupted")) continue;
+      String fileName = file.getName();
+      String uuidString = fileName.split("\\.")[0];
+      try {
+        UUID playerId = UUID.fromString(uuidString);
+        if (playerProfiles.containsKey(playerId)) {
+          continue;
+        }
+        ConfigStore.LoadResult<PlayerProfile> loadResult = store.get(playerId);
+        Optional<PlayerProfile> profileOptional = loadResult.profile();
+        if (profileOptional.isPresent()) {
+          PlayerProfile playerProfile = profileOptional.get();
+          playerProfiles.put(playerId, playerProfile);
+          nameToIdMap.put(playerProfile.getActivity().getLastKnownName(), playerId);
+          if (loadResult.requiresSave()) {
+            dirtyProfiles.add(playerId);
+          }
+        }
+      } catch (IllegalArgumentException e) {
+        // Ignore invalid UUIDs
+      }
+    }
+    if (callback != null) {
+      callback.run();
+    }
   }
 
   public List<PlayerProfileResponse> getPlayerProfiles() {

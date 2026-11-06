@@ -1,7 +1,7 @@
-package me.xaxis.ezmoderation.backend.player.data;
+package me.xaxis.ezmoderation.backend.player;
 
 import java.time.Instant;
-import me.xaxis.ezmoderation.backend.player.PlayerProfile;
+
 import me.xaxis.ezmoderation.backend.player.infraction.Infraction;
 
 public final class PlayerProfileEditor {

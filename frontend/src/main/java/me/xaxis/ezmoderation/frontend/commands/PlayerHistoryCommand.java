@@ -2,7 +2,8 @@ package me.xaxis.ezmoderation.frontend.commands;
 
 import java.util.UUID;
 import me.xaxis.ezmoderation.backend.lang.Lang;
-import me.xaxis.ezmoderation.backend.player.data.PlayerProfileManager;
+import me.xaxis.ezmoderation.backend.player.PlayerProfileManager;
+import me.xaxis.ezmoderation.frontend.inventory.PlayerInfractionsGUI;
 import me.xaxis.ezmoderation.frontend.utils.ChatUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -35,15 +36,37 @@ public class PlayerHistoryCommand implements CommandExecutor {
       return true;
     }
 
+    if (args.length < 1) {
+      sender.sendMessage(ChatUtils.chat(lang.historyCommandUsage()));
+      return true;
+    }
+
     Player player = (Player) sender;
+
+    String playerName = args[0];
+    UUID playerId = profileManager.getPlayerIdByName(playerName);
+    if (playerId == null) {
+      player.sendMessage(ChatUtils.chat(lang.playerNotFound(playerName)));
+      return true;
+    }
+    var profile = profileManager.loadOrCreateProfile(playerId, playerName);
+
+    if (profile == null) {
+      player.sendMessage(ChatUtils.chat(lang.playerNotFound(playerName)));
+      return true;
+    }
     // todo gui for player
+    PlayerInfractionsGUI gui =
+        new PlayerInfractionsGUI(profile.playerInfractionHistory().infractions());
+
+    player.openInventory(gui.getInventory());
 
     return true;
   }
 
   private void handleConsoleCommand(ConsoleCommandSender console, String[] args) {
     if (args.length < 1) {
-      // usage message
+      console.sendMessage(ChatUtils.chat(lang.historyCommandUsage()));
       return;
     }
 

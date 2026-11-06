@@ -2,8 +2,12 @@ package me.xaxis.ezmoderation.frontend;
 
 import java.time.Instant;
 import java.util.UUID;
-import me.xaxis.ezmoderation.backend.player.data.PlayerProfileManager;
+import me.xaxis.ezmoderation.backend.lang.Lang;
+import me.xaxis.ezmoderation.backend.player.PlayerProfileManager;
 import me.xaxis.ezmoderation.backend.settings.ConfigSettings;
+import me.xaxis.ezmoderation.frontend.commands.PlayerHistoryCommand;
+import me.xaxis.ezmoderation.frontend.lang.LangLoader;
+import me.xaxis.ezmoderation.frontend.listeners.InventoryClick;
 import me.xaxis.ezmoderation.frontend.player.PlayerLifecycleListener;
 import me.xaxis.ezmoderation.frontend.player.PlayerProfileStore;
 import me.xaxis.ezmoderation.frontend.settings.ConfigSettingsLoader;
@@ -18,6 +22,11 @@ public class EzModeration extends JavaPlugin {
   private ConfigSettings configSettings;
   private ConfigSettingsLoader configSettingsLoader;
   private BukkitTask autoSaveTask;
+  private Lang lang;
+
+  public Lang getLang() {
+    return lang;
+  }
 
   public ConfigSettings getConfigSettings() {
     return configSettings;
@@ -42,7 +51,18 @@ public class EzModeration extends JavaPlugin {
     configSettings = configSettingsLoader.load();
 
     if (configSettings == null) {
-      getLogger().severe("Failed to load config settings!");
+      getLogger()
+          .severe("Failed to load config settings! Please check the log for more information.");
+      getPluginLoader().disablePlugin(this);
+      return;
+    }
+
+    LangLoader langLoader = new LangLoader(getDataFolder().toPath(), getLogger());
+    lang = langLoader.load();
+
+    if (lang == null) {
+      getLogger()
+          .severe("Failed to load language settings! Please check the log for more information.");
       getPluginLoader().disablePlugin(this);
       return;
     }
@@ -75,6 +95,22 @@ public class EzModeration extends JavaPlugin {
                 },
                 configSettings.profileAutoSaveDelay(),
                 configSettings.profileAutoSaveDelay());
+    getServer()
+        .getScheduler()
+        .runTaskAsynchronously(
+            this,
+            () ->
+                playerProfileManager.cachePlayerProfiles(
+                    playerProfileStore.getPath(),
+                    () -> getServer().getScheduler().runTask(this, this::onPlayerProfilesCached)));
+  }
+
+  private void onPlayerProfilesCached() {
+    getLogger().info("All player profiles have been cached.");
+
+    // continue logic after caching as we don't want to cause concurrency issues
+    getServer().getPluginManager().registerEvents(new InventoryClick(), this);
+    getCommand("history").setExecutor(new PlayerHistoryCommand(playerProfileManager, lang));
   }
 
   @Override

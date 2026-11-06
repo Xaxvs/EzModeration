@@ -1,4 +1,4 @@
-package me.xaxis.ezmoderation.backend.player.data;
+package me.xaxis.ezmoderation.backend.player;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.UUID;
 import me.xaxis.ezmoderation.backend.config.ConfigEntry;
 import me.xaxis.ezmoderation.backend.config.Schema;
-import me.xaxis.ezmoderation.backend.player.PlayerProfile;
 import me.xaxis.ezmoderation.backend.player.infraction.Infraction;
 
 public class PlayerProfileSchema implements Schema {

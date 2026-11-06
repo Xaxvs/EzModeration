@@ -10,7 +10,7 @@ import me.xaxis.ezmoderation.backend.config.ConfigValidator;
 import me.xaxis.ezmoderation.backend.config.Loader;
 import me.xaxis.ezmoderation.backend.file.FileUtils;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
-import me.xaxis.ezmoderation.backend.player.data.PlayerProfileSchema;
+import me.xaxis.ezmoderation.backend.player.PlayerProfileSchema;
 import me.xaxis.ezmoderation.frontend.utils.SourceUtils;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;

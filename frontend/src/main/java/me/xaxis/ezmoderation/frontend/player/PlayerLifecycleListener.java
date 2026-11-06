@@ -2,7 +2,7 @@ package me.xaxis.ezmoderation.frontend.player;
 
 import java.time.Instant;
 import java.util.UUID;
-import me.xaxis.ezmoderation.backend.player.data.PlayerProfileManager;
+import me.xaxis.ezmoderation.backend.player.PlayerProfileManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
