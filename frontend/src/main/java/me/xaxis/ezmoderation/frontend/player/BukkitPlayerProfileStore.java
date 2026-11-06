@@ -8,7 +8,6 @@ import java.util.UUID;
 import java.util.logging.Logger;
 import me.xaxis.ezmoderation.backend.config.ConfigStore;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
-import me.xaxis.ezmoderation.backend.player.data.PlayerProfileSchema;
 
 public final class BukkitPlayerProfileStore implements ConfigStore<PlayerProfile> {
 
@@ -28,20 +27,14 @@ public final class BukkitPlayerProfileStore implements ConfigStore<PlayerProfile
   }
 
   @Override
-  public Optional<PlayerProfile> load(UUID playerId) {
+  public LoadResult<PlayerProfile> get(UUID playerId) {
     if (playerId == null) {
       throw new IllegalArgumentException("playerId cannot be null");
     }
-    if (profiles.containsKey(playerId)) {
-      PlayerProfileLoader loader = profiles.get(playerId);
-      PlayerProfile profile = loader.load();
-      return Optional.ofNullable(profile);
-    }
-
-    PlayerProfileLoader loader = new PlayerProfileLoader(dataFolder, logger, playerId);
-    profiles.put(playerId, loader);
+    PlayerProfileLoader loader =
+        profiles.computeIfAbsent(playerId, id -> new PlayerProfileLoader(dataFolder, logger, id));
     PlayerProfile profile = loader.load();
-    return Optional.ofNullable(profile);
+    return new LoadResult<>(Optional.ofNullable(profile), loader.requiresSave());
   }
 
   @Override
@@ -49,17 +42,9 @@ public final class BukkitPlayerProfileStore implements ConfigStore<PlayerProfile
     if (profile == null) {
       throw new IllegalArgumentException("profile cannot be null");
     }
-    if (profiles.containsKey(profile.getPlayerId())) {
-      PlayerProfileLoader loader = profiles.get(profile.getPlayerId());
-      loader.write(PlayerProfileSchema.serialize(profile));
-      loader.save();
-      return;
-    }
-
-    UUID playerId = profile.getPlayerId();
-    PlayerProfileLoader loader = new PlayerProfileLoader(dataFolder, logger, playerId);
-    profiles.put(playerId, loader);
-    loader.write(PlayerProfileSchema.serialize(profile));
-    loader.save();
+    PlayerProfileLoader loader =
+        profiles.computeIfAbsent(
+            profile.getPlayerId(), id -> new PlayerProfileLoader(dataFolder, logger, id));
+    loader.save(profile);
   }
 }

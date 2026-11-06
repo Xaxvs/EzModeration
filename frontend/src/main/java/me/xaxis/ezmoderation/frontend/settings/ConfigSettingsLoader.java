@@ -57,7 +57,9 @@ public class ConfigSettingsLoader implements Loader<ConfigSettings> {
     return SourceUtils.isValid(path, yaml);
   }
 
+  @Override
   public void save() {
     configFile.save(yaml.saveToString());
   }
+
 }

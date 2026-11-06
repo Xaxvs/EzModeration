@@ -1,6 +1,12 @@
 package me.xaxis.ezmoderation.backend.player.data;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import me.xaxis.ezmoderation.backend.config.ConfigStore;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
 import me.xaxis.ezmoderation.backend.player.response.PlayerActivityResponse;
@@ -92,7 +98,8 @@ public class PlayerProfileManager {
     if (playerName == null || playerName.isBlank()) {
       throw new IllegalArgumentException("playerName cannot be null or blank");
     }
-    Optional<PlayerProfile> profileOptional = store.load(playerId);
+    ConfigStore.LoadResult<PlayerProfile> loadResult = store.get(playerId);
+    Optional<PlayerProfile> profileOptional = loadResult.profile();
     PlayerProfile playerProfile;
     if (profileOptional.isPresent() && !playerId.equals(profileOptional.get().getPlayerId())) {
       throw new IllegalStateException("Profile store returned a different player ID");
@@ -100,7 +107,12 @@ public class PlayerProfileManager {
     if (profileOptional.isEmpty()) {
       playerProfile = new PlayerProfile(playerId, playerName);
       dirtyProfiles.add(playerId);
-    } else playerProfile = profileOptional.get();
+    } else {
+      playerProfile = profileOptional.get();
+      if (loadResult.requiresSave()) {
+        dirtyProfiles.add(playerId);
+      }
+    }
 
     return playerProfile;
   }

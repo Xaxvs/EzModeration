@@ -12,21 +12,17 @@ public class ConfigSettingsSchema implements Schema {
     return Map.of();
   }
 
-  public static Map<String, Object> serialize(ConfigSettings settings) {
-    // todo
-    return null;
-  }
-
   public static ConfigSettings load(Map<String, Object> values) {
     if (values == null) {
       return null;
     }
-    // todo
-    return new ConfigSettings();
+    return new ConfigSettings(
+        (long) values.getOrDefault("profile-auto-save-delay", 20 * 30L) // default to ticks
+        );
   }
 
   @Override
   public List<ConfigEntry> getEntries() {
-    return List.of();
+    return List.of(new ConfigEntry("profile-auto-save-delay", ConfigEntry.Type.LONG));
   }
 }

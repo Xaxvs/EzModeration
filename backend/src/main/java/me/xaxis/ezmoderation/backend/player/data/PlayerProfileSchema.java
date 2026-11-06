@@ -4,10 +4,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.Locale;
 import me.xaxis.ezmoderation.backend.config.ConfigEntry;
 import me.xaxis.ezmoderation.backend.config.Schema;
 import me.xaxis.ezmoderation.backend.player.PlayerProfile;
@@ -15,7 +15,7 @@ import me.xaxis.ezmoderation.backend.player.infraction.Infraction;
 
 public class PlayerProfileSchema implements Schema {
 
-  public static Optional<PlayerProfile> load(Map<String, Object> values) {
+  public static Optional<PlayerProfile> createFrom(Map<String, Object> values) {
     if (values == null) {
       return Optional.empty();
     }
@@ -28,8 +28,7 @@ public class PlayerProfileSchema implements Schema {
       List<Infraction> infractions = parseInfractions(values.get("infraction-history.infractions"));
 
       return Optional.of(
-          new PlayerProfile(
-              playerId, infractions, false, lastLogin, lastLogout, playerName));
+          new PlayerProfile(playerId, infractions, false, lastLogin, lastLogout, playerName));
     } catch (IllegalArgumentException | ClassCastException | NullPointerException exception) {
       return Optional.empty();
     }
@@ -84,8 +83,7 @@ public class PlayerProfileSchema implements Schema {
 
       UUID playerId = Schema.parseUuid(map.get("player-id"));
       Infraction.Type type =
-          Infraction.Type.valueOf(
-              Schema.requireString(map.get("type")).toUpperCase(Locale.ROOT));
+          Infraction.Type.valueOf(Schema.requireString(map.get("type")).toUpperCase(Locale.ROOT));
       String reason = Schema.requireString(map.get("reason"));
       Instant timestamp = Schema.parseInstant(map.get("timestamp"));
       Object expiresAtValue = map.get("expires-at");

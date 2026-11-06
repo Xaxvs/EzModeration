@@ -77,6 +77,7 @@ public class Infraction {
     BAN,
     MUTE,
     WARN,
-    KICK;
+    KICK,
+    FREEZE,
   }
 }

@@ -79,7 +79,7 @@ class EzModerationTest {
   @Test
   void profileLoaderBuildsProfileAndInfraction() {
     Map<String, Object> values = profileValues();
-    PlayerProfile profile = PlayerProfileSchema.load(values).orElseThrow();
+    PlayerProfile profile = PlayerProfileSchema.createFrom(values).orElseThrow();
 
     assertEquals(PLAYER_ID, profile.getPlayerId());
     assertEquals("Alex", profile.getActivity().getLastKnownName());
@@ -92,7 +92,7 @@ class EzModerationTest {
 
   @Test
   void profileSchemaSerializesDomainObjectsToConfigValues() {
-    PlayerProfile profile = PlayerProfileSchema.load(profileValues()).orElseThrow();
+    PlayerProfile profile = PlayerProfileSchema.createFrom(profileValues()).orElseThrow();
 
     Map<String, Object> serialized = PlayerProfileSchema.serialize(profile);
     assertFalse(serialized.containsKey("activity.is-online"));
@@ -112,17 +112,17 @@ class EzModerationTest {
   void profileLoaderRejectsMalformedValues() {
     Map<String, Object> values = profileValues();
     values.put("player-id", "not-a-uuid");
-    assertTrue(PlayerProfileSchema.load(values).isEmpty());
+    assertTrue(PlayerProfileSchema.createFrom(values).isEmpty());
 
     values = profileValues();
     values.put("infraction-history.infractions", List.of("not-a-map"));
-    assertTrue(PlayerProfileSchema.load(values).isEmpty());
+    assertTrue(PlayerProfileSchema.createFrom(values).isEmpty());
 
     values = profileValues();
     values.put("activity.last-login-time", 1.5d);
-    assertTrue(PlayerProfileSchema.load(values).isEmpty());
+    assertTrue(PlayerProfileSchema.createFrom(values).isEmpty());
 
-    assertTrue(PlayerProfileSchema.load(null).isEmpty());
+    assertTrue(PlayerProfileSchema.createFrom(null).isEmpty());
   }
 
   @Test
@@ -147,7 +147,7 @@ class EzModerationTest {
     for (int i = 0; i < 10_000; i++) {
       Map<String, Object> values = profileValues();
       values.put("activity.last-known-name", "Player" + i);
-      assertTrue(PlayerProfileSchema.load(values).isPresent());
+      assertTrue(PlayerProfileSchema.createFrom(values).isPresent());
     }
   }
 
@@ -362,6 +362,13 @@ class EzModerationTest {
   }
 
   @Test
+  void loadResultRejectsNullOptional() {
+    assertThrows(
+        NullPointerException.class,
+        () -> new ConfigStore.LoadResult<PlayerProfile>(null, false));
+  }
+
+  @Test
   void profileManagerRejectsStoreReturningWrongProfile() throws Exception {
     UUID otherId = UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
     MemoryProfileStore store = new MemoryProfileStore(new PlayerProfile(otherId, "Other"));
@@ -413,9 +420,9 @@ class EzModerationTest {
     }
 
     @Override
-    public Optional<PlayerProfile> load(UUID playerId) {
+    public ConfigStore.LoadResult<PlayerProfile> get(UUID playerId) {
       loads++;
-      return Optional.ofNullable(profile);
+      return new ConfigStore.LoadResult<>(Optional.ofNullable(profile), false);
     }
 
     @Override

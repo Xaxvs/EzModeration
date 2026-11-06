@@ -1,7 +1,6 @@
 package me.xaxis.ezmoderation.frontend.player;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -18,31 +17,33 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 final class PlayerProfileLoader implements Loader<PlayerProfile> {
 
-  private final FileConfiguration yaml;
   private final Logger logger;
   private final UUID playerId;
   private final ConfigFile configFile;
+  private FileConfiguration yaml;
   private boolean writeDefaults;
-  private boolean resetBeforeWrite;
+  private boolean requiresSave;
 
   PlayerProfileLoader(Path path, Logger logger, UUID playerId) {
     this.configFile = new ConfigFile(path, playerId + ".yml");
     this.writeDefaults = configFile.initialize();
+    this.requiresSave = writeDefaults;
     this.yaml = YamlConfiguration.loadConfiguration(configFile.getPath().toFile());
     this.logger = logger;
     this.playerId = playerId;
-  }
-
-  public boolean shouldSave() {
-    return writeDefaults;
   }
 
   @Override
   public PlayerProfile load() {
 
     if (writeDefaults) {
+      PlayerProfile profile =
+          PlayerProfileSchema.createFrom(PlayerProfileSchema.defaults(playerId))
+              .orElseThrow(() ->
+                  new IllegalStateException(
+                      "Failed to load default profile for player: " + playerId));
       writeDefaults = false;
-      return null;
+      return profile;
     }
 
     ConfigValidator configValidator = new ConfigValidator(this, logger);
@@ -50,19 +51,26 @@ final class PlayerProfileLoader implements Loader<PlayerProfile> {
       return recoverCorruptProfile();
     }
 
-    return PlayerProfileSchema.load(yaml.getValues(true)).orElseGet(this::recoverCorruptProfile);
+    return PlayerProfileSchema.createFrom(yaml.getValues(true))
+        .orElseGet(this::recoverCorruptProfile);
   }
 
   private PlayerProfile recoverCorruptProfile() {
     FileUtils.isolateFile(configFile.getPath());
     configFile.initialize();
+    yaml = YamlConfiguration.loadConfiguration(configFile.getPath().toFile());
+    writeDefaults = true;
+    requiresSave = true;
     logger.severe(
-        "Failed to load player profile. The file has been isolated. "
-            + "Please check the logs for more information. "
+        configFile.getPath().toString()
+            + " is corrupt and cannot be loaded. "
+            + "The file has been isolated. Please check the logs for more information. "
             + "A new profile will be created for the player.");
-    writeDefaults = false;
-    resetBeforeWrite = true;
     return null;
+  }
+
+  boolean requiresSave() {
+    return requiresSave;
   }
 
   @Override
@@ -77,17 +85,21 @@ final class PlayerProfileLoader implements Loader<PlayerProfile> {
 
   @Override
   public void write(Map<String, Object> values) {
-    if (resetBeforeWrite) {
-      for (String key : new ArrayList<>(yaml.getKeys(false))) {
-        yaml.set(key, null);
-      }
-      resetBeforeWrite = false;
-    }
     values.forEach(yaml::set);
   }
 
   @Override
   public void save() {
     configFile.save(yaml.saveToString());
+    writeDefaults = false;
+    requiresSave = false;
+  }
+
+  void save(PlayerProfile profile) {
+    if (profile == null) {
+      throw new IllegalArgumentException("profile cannot be null");
+    }
+    write(PlayerProfileSchema.serialize(profile));
+    save();
   }
 }
