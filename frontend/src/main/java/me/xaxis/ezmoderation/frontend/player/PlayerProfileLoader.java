@@ -1,6 +1,7 @@
 package me.xaxis.ezmoderation.frontend.player;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -22,6 +23,7 @@ final class PlayerProfileLoader implements Loader<PlayerProfile> {
   private final UUID playerId;
   private final ConfigFile configFile;
   private boolean writeDefaults;
+  private boolean resetBeforeWrite;
 
   PlayerProfileLoader(Path path, Logger logger, UUID playerId) {
     this.configFile = new ConfigFile(path, playerId + ".yml");
@@ -39,8 +41,8 @@ final class PlayerProfileLoader implements Loader<PlayerProfile> {
   public PlayerProfile load() {
 
     if (writeDefaults) {
-      write(PlayerProfileSchema.defaults(playerId));
       writeDefaults = false;
+      return null;
     }
 
     ConfigValidator configValidator = new ConfigValidator(this, logger);
@@ -57,8 +59,9 @@ final class PlayerProfileLoader implements Loader<PlayerProfile> {
         "Failed to load player profile. The file has been isolated. "
             + "Please check the logs for more information. "
             + "A new profile will be created for the player.");
-    writeDefaults = true;
-    return load();
+    writeDefaults = false;
+    resetBeforeWrite = true;
+    return null;
   }
 
   @Override
@@ -73,6 +76,12 @@ final class PlayerProfileLoader implements Loader<PlayerProfile> {
 
   @Override
   public void write(Map<String, Object> values) {
+    if (resetBeforeWrite) {
+      for (String key : new ArrayList<>(yaml.getKeys(false))) {
+        yaml.set(key, null);
+      }
+      resetBeforeWrite = false;
+    }
     values.forEach(yaml::set);
   }
 

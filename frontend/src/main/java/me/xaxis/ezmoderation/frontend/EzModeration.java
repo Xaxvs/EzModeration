@@ -1,9 +1,11 @@
 package me.xaxis.ezmoderation.frontend;
 
+import java.time.Instant;
 import java.util.UUID;
 import me.xaxis.ezmoderation.backend.player.data.PlayerProfileManager;
 import me.xaxis.ezmoderation.backend.settings.ConfigSettings;
 import me.xaxis.ezmoderation.frontend.player.BukkitPlayerProfileStore;
+import me.xaxis.ezmoderation.frontend.player.PlayerLifecycleListener;
 import me.xaxis.ezmoderation.frontend.settings.ConfigSettingsLoader;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -46,6 +48,8 @@ public class EzModeration extends JavaPlugin {
         new BukkitPlayerProfileStore(getDataFolder().toPath(), getLogger());
 
     playerProfileManager = new PlayerProfileManager(playerProfileStore);
+    getServer().getPluginManager().registerEvents(
+        new PlayerLifecycleListener(playerProfileManager), this);
 
     for (Player player : getServer().getOnlinePlayers()) {
       UUID playerId = player.getUniqueId();
@@ -53,6 +57,7 @@ public class EzModeration extends JavaPlugin {
       getLogger().info("Loading player profile for: " + playerName);
 
       playerProfileManager.loadOrCreateProfile(playerId, playerName);
+      playerProfileManager.editProfile(playerId).login(Instant.now(), playerName);
     }
   }
 
