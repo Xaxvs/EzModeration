@@ -6,11 +6,7 @@ import java.util.List;
 import java.util.UUID;
 import me.xaxis.ezmoderation.backend.player.infraction.Infraction;
 
-public class PlayerProfile {
-
-  private final UUID playerId;
-  private final PlayerActivity activity;
-  private final PlayerInfractionHistory infractionHistory;
+public record PlayerProfile(UUID playerId, PlayerActivity activity, PlayerInfractionHistory infractionHistory) {
 
   public PlayerProfile(
       UUID playerId,
@@ -29,24 +25,10 @@ public class PlayerProfile {
                     infraction == null || !playerId.equals(infraction.getPlayerId()))) {
       throw new IllegalArgumentException("Infractions must belong to the player profile");
     }
-    this.playerId = playerId;
-    this.activity = new PlayerActivity(isOnline, lastLoginTime, lastLogoutTime, lastKnownName);
-    this.infractionHistory = new PlayerInfractionHistory(infractions);
+    this(playerId, new PlayerActivity(isOnline, lastLoginTime, lastLogoutTime, lastKnownName), new PlayerInfractionHistory(infractions));
   }
 
   public PlayerProfile(UUID playerId, String playerName) {
     this(playerId, new ArrayList<>(), false, Instant.EPOCH, Instant.EPOCH, playerName);
-  }
-
-  public UUID getPlayerId() {
-    return playerId;
-  }
-
-  public PlayerActivity getActivity() {
-    return activity;
-  }
-
-  public PlayerInfractionHistory getInfractionHistory() {
-    return infractionHistory;
   }
 }

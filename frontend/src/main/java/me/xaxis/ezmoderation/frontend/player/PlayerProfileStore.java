@@ -48,7 +48,7 @@ public final class PlayerProfileStore implements ConfigStore<PlayerProfile> {
     }
     PlayerProfileLoader loader =
         profiles.computeIfAbsent(
-            profile.getPlayerId(), id -> new PlayerProfileLoader(getPath(), logger, id));
+            profile.playerId(), id -> new PlayerProfileLoader(getPath(), logger, id));
     loader.save(profile);
   }
 }

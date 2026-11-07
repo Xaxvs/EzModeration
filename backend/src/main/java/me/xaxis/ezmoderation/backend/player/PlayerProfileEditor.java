@@ -27,7 +27,7 @@ public final class PlayerProfileEditor {
     if (playerName == null || playerName.isBlank()) {
       throw new IllegalArgumentException("playerName cannot be null or blank");
     }
-    profile.getActivity().login(playerName, lastLoginTime);
+    profile.activity().login(playerName, lastLoginTime);
     markDirty.run();
     return this;
   }
@@ -36,7 +36,7 @@ public final class PlayerProfileEditor {
     if (lastLogoutTime == null) {
       throw new IllegalArgumentException("lastLogoutTime cannot be null");
     }
-    profile.getActivity().logout(lastLogoutTime);
+    profile.activity().logout(lastLogoutTime);
     markDirty.run();
     return this;
   }
@@ -45,7 +45,7 @@ public final class PlayerProfileEditor {
     if (infraction == null) {
       throw new IllegalArgumentException("infraction cannot be null");
     }
-    profile.getInfractionHistory().addInfraction(infraction);
+    profile.infractionHistory().addInfraction(infraction);
     markDirty.run();
     return this;
   }
@@ -54,8 +54,8 @@ public final class PlayerProfileEditor {
     if (infraction == null) {
       throw new IllegalArgumentException("infraction cannot be null");
     }
-    if (!profile.getInfractionHistory().getInfractions().contains(infraction)) return this;
-    profile.getInfractionHistory().deleteInfraction(infraction);
+    if (!profile.infractionHistory().getInfractions().contains(infraction)) return this;
+    profile.infractionHistory().deleteInfraction(infraction);
     markDirty.run();
     return this;
   }

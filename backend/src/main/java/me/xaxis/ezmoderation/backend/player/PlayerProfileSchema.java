@@ -35,15 +35,15 @@ public class PlayerProfileSchema implements Schema {
 
   public static Map<String, Object> serialize(PlayerProfile playerProfile) {
     Map<String, Object> values = new LinkedHashMap<>();
-    values.put("player-id", playerProfile.getPlayerId().toString());
+    values.put("player-id", playerProfile.playerId().toString());
     values.put(
-        "activity.last-login-time", playerProfile.getActivity().getLastLogin().toEpochMilli());
+        "activity.last-login-time", playerProfile.activity().getLastLogin().toEpochMilli());
     values.put(
-        "activity.last-logout-time", playerProfile.getActivity().getLastLogout().toEpochMilli());
-    values.put("activity.last-known-name", playerProfile.getActivity().getLastKnownName());
+        "activity.last-logout-time", playerProfile.activity().getLastLogout().toEpochMilli());
+    values.put("activity.last-known-name", playerProfile.activity().getLastKnownName());
     values.put(
         "infraction-history.infractions",
-        playerProfile.getInfractionHistory().getInfractions().stream()
+        playerProfile.infractionHistory().getInfractions().stream()
             .map(PlayerProfileSchema::serializeInfraction)
             .toList());
     return Map.copyOf(values);

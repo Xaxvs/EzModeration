@@ -83,13 +83,13 @@ class EzModerationTest {
     Map<String, Object> values = profileValues();
     PlayerProfile profile = PlayerProfileSchema.createFrom(values).orElseThrow();
 
-    assertEquals(PLAYER_ID, profile.getPlayerId());
-    assertEquals("Alex", profile.getActivity().getLastKnownName());
-    assertFalse(profile.getActivity().isOnline());
-    assertFalse(profile.getInfractionHistory().isBanned());
-    assertEquals(1, profile.getInfractionHistory().getInfractions().size());
+    assertEquals(PLAYER_ID, profile.playerId());
+    assertEquals("Alex", profile.activity().getLastKnownName());
+    assertFalse(profile.activity().isOnline());
+    assertFalse(profile.infractionHistory().isBanned());
+    assertEquals(1, profile.infractionHistory().getInfractions().size());
     assertEquals(
-        Infraction.Type.WARN, profile.getInfractionHistory().getInfractions().getFirst().getType());
+        Infraction.Type.WARN, profile.infractionHistory().getInfractions().getFirst().getType());
   }
 
   @Test

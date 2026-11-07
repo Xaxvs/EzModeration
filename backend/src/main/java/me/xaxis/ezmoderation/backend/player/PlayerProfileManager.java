@@ -47,7 +47,7 @@ public class PlayerProfileManager {
         if (profileOptional.isPresent()) {
           PlayerProfile playerProfile = profileOptional.get();
           playerProfiles.put(playerId, playerProfile);
-          nameToIdMap.put(playerProfile.getActivity().getLastKnownName(), playerId);
+          nameToIdMap.put(playerProfile.activity().getLastKnownName(), playerId);
           if (loadResult.requiresSave()) {
             dirtyProfiles.add(playerId);
           }
@@ -67,21 +67,21 @@ public class PlayerProfileManager {
 
   private PlayerActivityResponse toActivityResponse(PlayerProfile playerProfile) {
     return new PlayerActivityResponse(
-        playerProfile.getActivity().isOnline(),
-        playerProfile.getActivity().getLastLogin(),
-        playerProfile.getActivity().getLastLogout(),
-        playerProfile.getActivity().getLastKnownName());
+        playerProfile.activity().isOnline(),
+        playerProfile.activity().getLastLogin(),
+        playerProfile.activity().getLastLogout(),
+        playerProfile.activity().getLastKnownName());
   }
 
   private PlayerInfractionHistoryResponse toInfractionHistoryResponse(PlayerProfile playerProfile) {
     return new PlayerInfractionHistoryResponse(
-        playerProfile.getInfractionHistory().getInfractions());
+        playerProfile.infractionHistory().getInfractions());
   }
 
   private PlayerProfileResponse toProfileResponse(PlayerProfile playerProfile) {
     return new PlayerProfileResponse(
-        playerProfile.getPlayerId().toString(),
-        playerProfile.getActivity().getLastKnownName(),
+        playerProfile.playerId().toString(),
+        playerProfile.activity().getLastKnownName(),
         toActivityResponse(playerProfile),
         toInfractionHistoryResponse(playerProfile));
   }
@@ -111,7 +111,7 @@ public class PlayerProfileManager {
     }
     if (playerProfiles.containsKey(playerId)) {
       PlayerProfile profile = playerProfiles.get(playerId);
-      nameToIdMap.put(profile.getActivity().getLastKnownName(), playerId);
+      nameToIdMap.put(profile.activity().getLastKnownName(), playerId);
       return Optional.of(toProfileResponse(profile));
     }
     return Optional.empty();
@@ -146,7 +146,7 @@ public class PlayerProfileManager {
     ConfigStore.LoadResult<PlayerProfile> loadResult = store.get(playerId);
     Optional<PlayerProfile> profileOptional = loadResult.profile();
     PlayerProfile playerProfile;
-    if (profileOptional.isPresent() && !playerId.equals(profileOptional.get().getPlayerId())) {
+    if (profileOptional.isPresent() && !playerId.equals(profileOptional.get().playerId())) {
       throw new IllegalStateException("Profile store returned a different player ID");
     }
     if (profileOptional.isEmpty()) {
@@ -166,11 +166,11 @@ public class PlayerProfileManager {
     if (profile == null) {
       throw new IllegalArgumentException("profile cannot be null");
     }
-    if (!dirtyProfiles.contains(profile.getPlayerId())) {
+    if (!dirtyProfiles.contains(profile.playerId())) {
       return;
     }
     store.save(profile);
-    dirtyProfiles.remove(profile.getPlayerId());
+    dirtyProfiles.remove(profile.playerId());
   }
 
   public void savePlayerProfile(UUID playerId) {
